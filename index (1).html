@@ -1,0 +1,78 @@
+<!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#173e35"><title>График на личния състав</title><style>
+:root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#18312c;background:#f4f6f5}*{box-sizing:border-box}body{margin:0}header{background:#173e35;color:white;padding:16px 16px 15px}header h1{font-size:19px;margin:0 0 4px}header small{opacity:.78}main{max-width:1100px;margin:auto;padding:12px 10px 40px}.toolbar,.stats,.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.toolbar{justify-content:space-between;padding:12px;background:white;border-radius:14px;box-shadow:0 1px 5px #0001}.toolbar strong{font-size:17px}.toolbar button,.actions button,.modal button,.filebutton{border:1px solid #ced9d4;background:white;border-radius:10px;padding:10px 12px;font-weight:650;color:#244b40;cursor:pointer}.toolbar button:active,.actions button:active{background:#e1eee6}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.stat{background:white;border:1px solid #e5ebe8;padding:10px 8px;border-radius:12px}.stat b{display:block;font-size:22px;color:#173e35;font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:#63756f;font-weight:700}.stat.primary{border-color:#9bbcac;background:#e8f3eb}.section{background:white;border:1px solid #e3eae6;border-radius:14px;overflow:hidden;margin-top:12px}.section h2{font-size:14px;margin:0;padding:12px 12px 7px}.hint{font-size:12px;color:#687973;margin:0 12px 9px}.tablewrap{overflow:auto;max-height:68vh;overscroll-behavior:contain}.sheet{border-collapse:separate;border-spacing:0;font-size:12px;table-layout:fixed}.sheet th,.sheet td{height:37px;border-right:1px solid #e6eae8;border-bottom:1px solid #e6eae8;padding:0;text-align:center}.sheet th{height:45px;position:sticky;top:0;z-index:2;background:white;min-width:37px;width:37px}.sheet th .weekday{display:block;font-weight:750;font-size:11px}.sheet th .daynum{display:block;font-size:12px;margin-top:3px}.sheet .person{position:sticky;left:0;z-index:3;text-align:left;min-width:177px;width:177px;max-width:177px;padding:0 9px;background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}.sheet th.person{z-index:5;background:#eff4f1}.sheet td.weekend,.sheet th.weekend{background:#e9ecee}.sheet td.holiday,.sheet th.holiday{background:#e5e9ef}.sheet th.holiday{box-shadow:inset 0 3px #b07d30}.sheet td.weekend,.sheet td.holiday{color:#555}.sheet .group td{height:27px;background:#eaf0ec;color:#37584d;text-align:left;padding-left:10px;font-weight:750;position:relative}.cell{width:100%;height:100%;border:0;background:transparent;font-weight:750;font-size:12px;cursor:pointer;color:#34433e}.cell:focus-visible{outline:2px solid #176c52;outline-offset:-2px}.cell[data-status="Н"]{background:#ffe2ae;color:#7b4806}.cell[data-status="Б"]{background:#ffd9d8;color:#972e2e}.cell[data-status="О"]{background:#d8e8fc;color:#274b83}.cell[data-status="К"]{background:#e4d8f9;color:#563d8c}.cell[data-status="Р"]{background:#e0f2e5;color:#215c3b}.cell[data-status="П"]{color:#8b9490}.cell[data-status="Д"]{background:#f8e6d9;color:#86512f}.selected-col{outline:2px solid #32795a;outline-offset:-2px}.legend{display:flex;gap:9px;flex-wrap:wrap;padding:12px;font-size:11px;color:#576760}.pill{border-radius:7px;padding:4px 7px;background:#f0f2f1}.daybar{padding:10px 12px;background:#f4f9f6;border-bottom:1px solid #e3ebe6;font-size:12px}.actions{padding:12px}.actions button{font-size:12px}.danger{color:#a53535!important}.foot{font-size:11px;color:#677a71;padding:10px 4px;line-height:1.5}dialog{border:0;border-radius:18px;width:min(400px,calc(100% - 26px));box-shadow:0 15px 80px #102d2955;padding:18px;color:#19372e}dialog::backdrop{background:#0d231c75}dialog h3{margin:0 0 6px}dialog p{color:#60736b;margin:0 0 12px;font-size:13px}.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.choices button{text-align:left;padding:13px}.choices button small{display:block;opacity:.7;font-weight:400;margin-top:3px}.modal-close{width:100%;margin-top:12px}.notice{padding:11px;margin:12px 0;background:#fff8e8;border:1px solid #ead7a3;border-radius:12px;color:#765d29;font-size:12px}textarea{width:100%;height:190px;padding:9px;border:1px solid #bbcfc4;border-radius:10px;font:12px/1.6 system-ui;resize:vertical}label{font-size:12px;display:block;margin-bottom:5px;color:#51665d}input[type=file]{font-size:12px;max-width:100%}@media(min-width:650px){.stats{grid-template-columns:repeat(7,1fr)}main{padding:20px}.sheet .person{min-width:210px;width:210px;max-width:210px}}
+</style></head><body><header><h1>График на личния състав</h1><small>Версия 1.2 · лично ползване · работи офлайн</small></header><main><div class="toolbar"><button id="prev" aria-label="Предишен месец">‹</button><strong id="monthLabel"></strong><button id="next" aria-label="Следващ месец">›</button><button id="today">Днес</button></div><div class="stats" id="stats"></div><div class="section"><div class="daybar" id="daybar"></div><h2>Месечна таблица</h2><p class="hint">Плъзни хоризонтално. Докосни дата за справка; докосни клетка за промяна на статус.</p><div class="tablewrap"><table class="sheet" id="sheet"></table></div><div class="legend"><span class="pill">Р – на лице</span><span class="pill">Н – наряд</span><span class="pill">Б – болничен</span><span class="pill">О – отпуска</span><span class="pill">К – компенсация</span><span class="pill">П – почивка</span><span class="pill">Д – друго отсъствие</span></div></div><div class="section"><h2>Управление и резервно копие</h2><div class="actions"><button id="editNames">Редактирай списъка</button><button id="export">Изтегли резервно копие</button><button id="import">Възстанови от файл</button><input id="backupFile" type="file" accept="application/json,.json" hidden></div><p class="hint">Всичко се съхранява само на този телефон в браузъра. При изчистване на данните може да се изгуби. Прави резервни копия.</p></div><div class="notice" id="holidayInfo"></div><p class="foot">Официалните празници за 2026 г. са включени, включително допълнителните неприсъствени дни. Празничните обозначения са ориентир за календара и не означават автоматично почивка при служебен наряд. За други години е необходима допълнителна проверка на еднократно обявени неприсъствени дни.</p></main>
+<dialog id="statusDialog"><h3 id="personTitle"></h3><p id="statusDate"></p><div class="choices" id="choices"></div><button class="modal-close" id="cancel">Отказ</button></dialog><dialog id="namesDialog"><h3>Личен състав</h3><p>Въведи имената на отделни редове. Не е нужно да пишеш знака |. Заглавия като „КИО“, „Транспортно“ и „Ремонт и евакуация“ може да са на самостоятелен ред. Приема се и форматът „Група | звание и име“.</p><label for="namesText">Списък</label><textarea id="namesText" placeholder="Командване&#10;лейт. Иван Иванов&#10;КИО&#10;ефр. Петър Петров"></textarea><p id="namesError" role="alert" style="display:none;color:#a53535;font-weight:600;margin-top:8px"></p><div class="actions"><button id="saveNames" type="button">Запази</button><button id="cancelNames">Отказ</button></div></dialog>
+<script>
+'use strict';
+const SEED=[];
+const key='grafik-v1-private-device';
+const monthNames=['януари','февруари','март','април','май','юни','юли','август','септември','октомври','ноември','декември'];
+const weekdayNames=['П','В','С','Ч','П','С','Н'];
+const choices=[['Р','На лице'],['Н','Наряд'],['Б','Болничен'],['О','Отпуска'],['К','Компенсация'],['П','Почивка'],['Д','Друго отсъствие']];
+const holiday2026={'2026-01-01':'Нова година','2026-01-02':'Допълнителен неприсъствен ден','2026-03-03':'Ден на Освобождението','2026-04-10':'Велики петък','2026-04-11':'Велика събота','2026-04-12':'Великден','2026-04-13':'Великденски понеделник','2026-05-01':'Ден на труда','2026-05-06':'Гергьовден / Ден на храбростта','2026-05-24':'Ден на българската азбука','2026-05-25':'Допълнителен неприсъствен ден','2026-09-06':'Ден на Съединението','2026-09-07':'Допълнителен неприсъствен ден','2026-09-22':'Ден на Независимостта','2026-12-24':'Бъдни вечер','2026-12-25':'Коледа','2026-12-26':'Коледа','2026-12-28':'Допълнителен неприсъствен ден'};
+let state;try{state=JSON.parse(localStorage.getItem(key))}catch{};
+if(!state||!Array.isArray(state.people)||!state.statuses){state={people:SEED.map((x,i)=>({id:'p'+i,group:x[0],name:x[1]})),statuses:{}}}
+const today=new Date();let year=2026,month=10,day=17; if(today.getFullYear()===2026){month=today.getMonth();day=today.getDate()}
+const $=id=>document.getElementById(id);const pad=x=>String(x).padStart(2,'0');const dateKey=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;const daysIn=(y,m)=>new Date(y,m+1,0).getDate();const getStatus=(p,y,m,d)=>state.statuses[`${p.id}|${dateKey(y,m,d)}`]||(((new Date(y,m,d).getDay()+6)%7)>=5||holiday2026[dateKey(y,m,d)]?'П':'Р');
+function save(){try{localStorage.setItem(key,JSON.stringify(state));return true}catch(e){alert('Не успях да запиша данните на телефона. Провери дали използваш обикновен прозорец на Safari, а не частен режим.');return false}}
+function changeMonth(v){month+=v;if(month<0){month=11;year--}if(month>11){month=0;year++}day=Math.min(day,daysIn(year,month));render()}
+function el(tag,attrs={},text){const x=document.createElement(tag);Object.entries(attrs).forEach(([k,v])=>{if(k==='class')x.className=v;else x.setAttribute(k,v)});if(text!==undefined)x.textContent=text;return x}
+function render(){ $('monthLabel').textContent=`${monthNames[month].charAt(0).toUpperCase()+monthNames[month].slice(1)} ${year}`;const date=dateKey(year,month,day);$('daybar').textContent=`Избрана дата: ${pad(day)}.${pad(month+1)}.${year}${holiday2026[date]?' · '+holiday2026[date]:''}`; const counts={Р:0,Н:0,Б:0,О:0,К:0,П:0,Д:0};state.people.forEach(p=>counts[getStatus(p,year,month,day)]++);const total=state.people.length;const stats=[['ПО СПИСЪК',total],['НА ЛИЦЕ',counts.Р],['РАЗХОД',total-counts.Р],['НАРЯД',counts.Н],['БОЛНИЧЕН',counts.Б],['ОТПУСКА',counts.О],['КОМПЕНСАЦИЯ',counts.К],['ПОЧИВКА',counts.П],['ДРУГО',counts.Д]];$('stats').replaceChildren(...stats.map(([k,v])=>{let box=el('div',{class:'stat'+(k==='НА ЛИЦЕ'?' primary':'')});box.append(el('span',{},k),el('b',{},String(v)));return box}));
+const table=$('sheet');table.replaceChildren();let head=el('thead'),tr=el('tr');tr.append(el('th',{class:'person'},'ВОЕННОСЛУЖЕЩ'));for(let d=1;d<=daysIn(year,month);d++){const dow=(new Date(year,month,d).getDay()+6)%7;let cls=dow>=5?'weekend':'';if(holiday2026[dateKey(year,month,d)])cls+=' holiday';let th=el('th',{class:cls+(d===day?' selected-col':'')});th.title=holiday2026[dateKey(year,month,d)]||'';th.append(el('span',{class:'weekday'},weekdayNames[dow]),el('span',{class:'daynum'},String(d)));th.addEventListener('click',()=>{day=d;render()});tr.append(th)}head.append(tr);table.append(head);let body=el('tbody'),lastGroup=null;state.people.forEach(p=>{if(p.group!==lastGroup){lastGroup=p.group;let r=el('tr',{class:'group'});r.append(el('td',{colspan:String(daysIn(year,month)+1)},lastGroup));body.append(r)}let r=el('tr');r.append(el('td',{class:'person',title:p.name},p.name));for(let d=1;d<=daysIn(year,month);d++){let date=dateKey(year,month,d);let dow=(new Date(year,month,d).getDay()+6)%7;let cls=dow>=5?'weekend':'';if(holiday2026[date])cls+=' holiday';let cell=el('td',{class:cls});let s=getStatus(p,year,month,d);let btn=el('button',{class:'cell',type:'button','data-status':s,title:`${p.name}: ${date} — ${choices.find(c=>c[0]===s)?.[1]||s}`},s);btn.onclick=()=>showStatus(p,d);cell.append(btn);r.append(cell)}body.append(r)});table.append(body);
+$('holidayInfo').textContent=year===2026?'Календарът за 2026 г. включва официалните празници и допълнителните неприсъствени дни. 1 ноември е празник за учебните заведения, но не е общ неприсъствен ден.':'Внимание: официалните празници за '+year+' г. не са проверени в тази версия. Съботите и неделите продължават да се оцветяват.'}
+function showStatus(p,d){const dialog=$('statusDialog');$('personTitle').textContent=p.name;$('statusDate').textContent=`${pad(d)}.${pad(month+1)}.${year}`;$('choices').replaceChildren(...choices.map(([code,label])=>{const btn=el('button',{},code+' — '+label);btn.onclick=()=>{state.statuses[`${p.id}|${dateKey(year,month,d)}`]=code;save();day=d;dialog.close();render()};return btn}));dialog.showModal()}
+$('cancel').onclick=()=>$('statusDialog').close();$('prev').onclick=()=>changeMonth(-1);$('next').onclick=()=>changeMonth(1);$('today').onclick=()=>{year=today.getFullYear();month=today.getMonth();day=today.getDate();render()};
+$('editNames').onclick=()=>{
+  $('namesText').value=state.people.map(p=>p.group+' | '+p.name).join('\n');
+  $('namesError').style.display='none';
+  $('namesDialog').showModal();
+};
+$('cancelNames').onclick=()=>$('namesDialog').close();
+function parsePeople(text){
+  const lines=text.replace(/\u00a0/g,' ').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const knownGroups=['Командване','КИО','Транспортно','Ремонт и евакуация'];
+  let group='Командване';
+  const parsed=[];
+  for(const line of lines){
+    // Support "Група | звание и име" as well as simple section headings + names.
+    if(line.includes('|')){
+      const pivot=line.indexOf('|');
+      const section=line.slice(0,pivot).trim()||group;
+      const name=line.slice(pivot+1).trim();
+      if(name){group=section;parsed.push({group:section,name})}
+      continue;
+    }
+    const heading=knownGroups.find(g=>g.toLocaleLowerCase('bg')===line.toLocaleLowerCase('bg'));
+    if(heading){group=heading;continue;}
+    // A short standalone uppercase label is a group heading, not a person.
+    if(line===line.toLocaleUpperCase('bg')&&line.length<40&&!/\d/.test(line)){
+      group=line;continue;
+    }
+    parsed.push({group,name:line});
+  }
+  return parsed;
+}
+$('saveNames').onclick=()=>{
+  const parsed=parsePeople($('namesText').value);
+  if(!parsed.length){
+    $('namesError').textContent='Няма разпознати имена. Въведи поне един военнослужещ.';
+    $('namesError').style.display='block';
+    return;
+  }
+  const original=state.people;
+  const used=new Set();
+  const people=parsed.map((entry,i)=>{
+    const matching=original.find(p=>p.name===entry.name&&p.group===entry.group&&!used.has(p.id));
+    if(matching){used.add(matching.id);return matching;}
+    return {id:'custom'+Date.now()+'_'+i,group:entry.group,name:entry.name};
+  });
+  const previous=state.people;
+  state.people=people;
+  if(!save()){state.people=previous;return;}
+  $('namesError').style.display='none';
+  $('namesDialog').close();
+  render();
+};
+$('export').onclick=()=>{const file=new Blob([JSON.stringify({...state,format:'grafik-v1'},null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download='grafik-backup-'+dateKey(year,month,day)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};$('import').onclick=()=>$('backupFile').click();$('backupFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.people)||typeof data.statuses!=='object'||data.statuses===null)throw Error('Некоректен файл');if(!confirm('Да заменя текущия списък и график с резервното копие?'))return;state={people:data.people,statuses:data.statuses};save();render()}catch(err){alert('Неуспешно зареждане: '+err.message)}e.target.value=''};
+render();
+</script></body></html>
