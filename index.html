@@ -77,6 +77,66 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
 @media(min-width:620px){.row{grid-template-columns:minmax(185px,29%) repeat(7,minmax(0,1fr))}.bottom-nav{left:50%;transform:translateX(-50%);max-width:980px;border-radius:17px 17px 0 0}.brand-icon{width:52px;height:52px}.metrics{gap:10px}.metric .number{font-size:32px}}
 @media(max-width:350px){.row{grid-template-columns:minmax(103px,33%) repeat(7,minmax(0,1fr))}.statuscell{font-size:9px}.namecell .personname{font-size:10px}.brand-icon{width:43px;height:43px}header h1{font-size:14px}.detail{padding:7px}.datebutton .num{font-size:10px}}
 
+
+/* Cloud settings */
+.cloud-sheet{max-height:min(91dvh,790px);overflow:auto}
+.cloud-help{font-size:13px;color:#345944;line-height:1.58;background:#f0f5ee;padding:12px 13px;border-radius:13px;margin:16px 0}
+.cloud-panel{padding:12px;border:1px solid #dce6da;border-radius:14px;margin:10px 0;background:#fbfdfa}
+.cloud-panel[hidden],#cloudError[hidden]{display:none!important}
+.cloud-panel label{display:block;font-size:13px;font-weight:800;color:#1f5037;margin-bottom:9px}
+.cloud-panel input,.cloud-config{width:100%;box-sizing:border-box;background:#fff;color:#1b3e2b;border:1px solid #bdd0c1;border-radius:10px;padding:12px;font-size:14px;margin:0 0 9px;outline:none}
+.cloud-panel input:focus,.cloud-config:focus{border-color:#769b7b;box-shadow:0 0 0 3px #87ac8e33}
+.cloud-config{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;resize:vertical;min-height:76px}
+.cloud-hint{font-size:11px;color:#577466;line-height:1.5;margin-top:10px}
+.cloud-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cloud-two .widebtn{font-size:12px;min-height:45px;padding:8px}
+.widebtn.secondary{background:#eef3eb;color:#234a37;border:1px solid #c3d5c6}
+.cloud-user{font-size:13px;font-weight:700;color:#234e3a;margin:0 0 12px;overflow-wrap:anywhere}
+.cloud-panel h3{margin:0 0 8px;color:#184b33;font-size:15px}
+.cloud-panel p{font-size:12px;color:#536b5e;line-height:1.5}
+.cloud-error{padding:12px;color:#a12c30;background:#ffecec;border:1px solid #f0b7b7;border-radius:10px;margin:12px 0;font-size:13px;line-height:1.5}
+.cloud-foot{display:flex;align-items:center;gap:8px;color:#536e60;font-size:12px;margin:14px 0}
+.cloud-foot .dot{display:inline-block;background:#d1aa6d;width:8px;height:8px;border-radius:50%}
+
+/* Stable, high-contrast week/month grid (v2.2). */
+:root{--name-col-width:137px;--date-col-width:35px}
+.roster-header-new{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 11px}
+.roster-heading{min-width:145px;flex:1}.roster-heading .heading{white-space:nowrap}
+.roster-actions{display:flex;align-items:center;gap:7px}
+.count-pill{font-size:11px;font-weight:750;color:#365a42;white-space:nowrap}
+.view-switch{display:flex;align-items:center;gap:3px;padding:3px;border-radius:12px;background:#e7ece7;border:1px solid #cbd6cd}
+.view-switch button{border:0;background:transparent;color:#476753;font-size:11px;font-weight:780;padding:8px 10px;border-radius:9px;min-height:34px}
+.view-switch button.active{background:#194f39;color:white;box-shadow:0 2px 5px #15352433}
+#scheduleSection .table-viewport{max-height:61dvh;border-top:1px solid #718579}
+#scheduleSection .personrow{min-height:46px;border-bottom:1px solid #87998d}
+#scheduleSection .namecell{min-height:46px;padding:4px 6px;border-right:1px solid #788d7f;box-shadow:none}
+#scheduleSection .namecell .rank{font-size:9px;margin-bottom:1px}
+#scheduleSection .namecell .personname{font-size:11px;line-height:1.1;max-height:27px}
+#scheduleSection .gridcell{border-left:0;border-right:1px solid #94a399;border-bottom:0;background:#fff;min-width:0}
+#scheduleSection .gridcell.weekend{background:#cdd1ce}
+#scheduleSection .gridcell.holiday:not(.weekend){background:#f6f2e7}
+#scheduleSection .gridcell.selected{box-shadow:inset 0 0 0 2px #5d8a72}
+#scheduleSection .statuscell{height:100%;min-height:46px;padding:1px 0;font-size:9.5px;letter-spacing:-.03em;overflow:hidden}
+#scheduleSection .statuscell.duty,#scheduleSection .statuscell.sick,#scheduleSection .statuscell.leave,#scheduleSection .statuscell.comp,#scheduleSection .statuscell.break,#scheduleSection .statuscell.other{border-radius:4px;margin:5px 2px;width:calc(100% - 4px);height:calc(100% - 10px);min-height:34px}
+#scheduleSection .datebutton{height:45px;border-left:0;border-right:1px solid #668374}
+#scheduleSection .datebutton.weekend{background:#bfc5c0;color:#304c3c;border-right-color:#87998c}
+#scheduleSection .headrow .namehead{min-height:45px;border-right:1px solid #668374}
+#scheduleSection .group-row{height:27px;border-bottom:1px solid #9aafa0}
+#scheduleSection .group-label{font-weight:800}
+#scheduleSection.month-view .table-viewport{overflow-x:auto;overflow-y:auto;touch-action:pan-x pan-y;overscroll-behavior-x:contain;scrollbar-width:thin}
+#scheduleSection.month-view .row{grid-template-columns:var(--name-col-width) repeat(var(--visible-days),var(--date-col-width));width:max-content;min-width:max-content}
+#scheduleSection.month-view #rosterRows{width:max-content;min-width:100%}
+#scheduleSection.month-view .namecell{position:sticky;left:0;z-index:4;background:#fff;box-shadow:2px 0 4px #1b35221d}
+#scheduleSection.month-view .headrow{width:max-content;min-width:max-content}
+#scheduleSection.month-view .headrow .namehead{position:sticky;left:0;z-index:9;box-shadow:2px 0 5px #133e2c44}
+#scheduleSection.month-view .group-row{width:100%;min-width:100%;box-sizing:border-box}
+#scheduleSection.month-view .group-label{position:sticky;left:10px}
+#scheduleSection.month-view .statuscell{font-size:9px}
+#scheduleSection.month-view .datebutton{font-size:10px}
+#scheduleSection.month-view .datebutton .letter{font-size:10px}
+#scheduleSection.month-view .datebutton .num{font-size:10px}
+@media(min-width:750px){:root{--name-col-width:195px;--date-col-width:36px}#scheduleSection.month-view .namecell .personname{font-size:12px}}
+@media(max-width:375px){:root{--name-col-width:126px;--date-col-width:33px}.view-switch button{padding:7px 8px}.roster-header-new{gap:7px}}
 </style>
 </head>
 <body>
@@ -95,10 +155,13 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
 <div class="metrics" id="metrics"></div>
 <div class="details" id="details"></div>
 <section class="surface" id="scheduleSection">
-  <div class="roster-header"><div><div class="heading">Седмичен график</div><small>Избери клетка за промяна · плъзгане само нагоре и надолу</small></div><span style="font-size:11px;color:#6f887b;font-weight:750" id="peopleCount"></span></div>
+  <div class="roster-header roster-header-new">
+    <div class="roster-heading"><div class="heading" id="rosterTitle">Седмичен график</div><small id="rosterHint">Избери клетка за промяна</small></div>
+    <div class="roster-actions"><span id="peopleCount" class="count-pill"></span><div class="view-switch" role="group" aria-label="Показване на графика"><button type="button" class="active" id="weekMode" aria-pressed="true">Седмица</button><button type="button" id="monthMode" aria-pressed="false">Месец</button></div></div>
+  </div>
   <div class="weekbar"><button type="button" class="weeknav" id="prevWeek" aria-label="Предишна седмица">‹</button><div class="weeklabel" id="weekLabel"></div><button type="button" class="weeknav" id="nextWeek" aria-label="Следваща седмица">›</button></div>
   <div class="table-viewport" id="rosterScroll"><div class="row headrow" id="dateHead"></div><div id="rosterRows"></div></div>
-  <div class="sheetfoot" id="holidayInfo">Празна клетка = „На лице“. Събота и неделя са светлосиви.</div>
+  <div class="sheetfoot" id="holidayInfo">Празна клетка = „На лице“. Събота и неделя са сиви.</div>
   <div class="legend"><span>Празно · На лице</span><span>Наряд · код</span><span>О · Отпуска</span><span>Б · Болничен</span><span>К · Компенсация</span><span>П · Почивка</span></div>
 </section>
 </main>
@@ -114,10 +177,19 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
   <button class="menu-action" type="button" id="editNames"><span class="mi">♙</span><span class="ml">Редактирай състава<small>Добавяне и подреждане на военнослужещи</small></span><span class="arr">›</span></button>
   <button class="menu-action" type="button" id="export"><span class="mi">⇩</span><span class="ml">Запази резервно копие<small>Изтегляне на данните на телефона</small></span><span class="arr">›</span></button>
   <button class="menu-action" type="button" id="import"><span class="mi">⇧</span><span class="ml">Възстанови от файл<small>Зареждане на резервно копие</small></span><span class="arr">›</span></button>
-  <button class="menu-action" type="button" id="cloudInfo"><span class="mi">☁</span><span class="ml">Съхранение на данните<small>Автоматично локално запазване</small></span><span class="arr">›</span></button>
+  <button class="menu-action" type="button" id="cloudInfo"><span class="mi">☁</span><span class="ml">Облачна синхронизация<small>Телефон, компютър и лаптоп</small></span><span class="arr">›</span></button>
  </div><input type="file" id="backupFile" accept="application/json,.json" hidden>
 </div></dialog>
-<dialog id="cloudDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">Съхранение</h2><div class="modal-sub">Автоматично запазване</div></div><button class="closemodal" id="closeCloud" type="button">×</button></div><p style="font-size:13px;line-height:1.6;color:#506c5b;margin:15px 0">Графикът се запазва автоматично в браузъра на този телефон. При отваряне на същия адрес данните се зареждат отново. <strong>Облачната синхронизация между устройства още не е настроена.</strong> За сигурност изтегляй резервно копие от менюто, особено преди смяна на телефона или изчистване на Safari.</p><button class="widebtn" id="doneCloud" type="button">Разбрах</button></div></dialog>
+<dialog id="cloudDialog"><div class="sheet-overlay cloud-sheet"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">☁ Синхронизация</h2><div class="modal-sub" id="cloudState">Не е настроена · данните са на устройството</div></div><button class="closemodal" id="closeCloud" type="button" aria-label="Затвори">×</button></div>
+  <div class="cloud-help">Използвай един и същ имейл и парола на всички устройства. Промените се записват на телефона веднага, а при свързан облак се появяват и на другите устройства.</div>
+  <section class="cloud-panel" id="configSection"><label for="firebaseConfigField">Firebase конфигурация (еднократно)</label><textarea id="firebaseConfigField" class="cloud-config" rows="4" placeholder='Постави firebaseConfig от Firebase Console: {"apiKey":"...", "authDomain":"...", "projectId":"...", "appId":"..."}'></textarea><button class="widebtn" type="button" id="saveFirebaseConfig">Свържи Firebase проект</button><div class="cloud-hint">Създай Firebase проект, активирай Authentication → Email/Password и Firestore. Постави защитните правила от инструкциите към приложението. Конфигурацията не е парола.</div></section>
+  <section class="cloud-panel" id="loginSection" hidden><label for="cloudEmail">Потребителски акаунт</label><input id="cloudEmail" type="email" inputmode="email" autocomplete="username" placeholder="Имейл"><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Парола (поне 6 символа)"><div class="cloud-two"><button type="button" id="cloudLogin" class="widebtn">Влез</button><button type="button" id="cloudRegister" class="widebtn secondary">Създай акаунт</button></div></section>
+  <section class="cloud-panel" id="linkedSection" hidden><div class="cloud-user" id="cloudUser"></div><div class="cloud-two"><button type="button" class="widebtn secondary" id="cloudShareLink">Копирай линк за другите устройства</button><button type="button" class="widebtn secondary" id="cloudLogout">Изход</button></div></section>
+  <section class="cloud-panel" id="cloudDecision" hidden><h3>Открити са два различни графика</h3><p>На устройството има локални записи, а в облака има друг график. Избери кой да запазим. Направи резервно копие преди избора.</p><div class="cloud-two"><button type="button" class="widebtn" id="cloudUseRemote">Зареди облачния</button><button type="button" class="widebtn secondary" id="cloudUseLocal">Качи този</button></div></section>
+  <div id="cloudError" class="cloud-error" role="alert" hidden></div>
+  <div class="cloud-foot"><span class="dot" id="cloudDot"></span><span id="cloudFootText">Локалното запазване работи без интернет.</span></div>
+  <button class="widebtn secondary" id="doneCloud" type="button">Затвори</button>
+</div></dialog>
 <dialog id="statsDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">Справка за деня</h2><div class="modal-sub" id="statsDate">Избрана дата</div></div><button type="button" class="closemodal" id="closeStats">×</button></div><p class="stats-explainer">Празните клетки се броят като „На лице“. Всички обозначения на наряд се сумират в показателя „Наряд“.</p><div class="stat-stack" id="statsDetails"></div><button type="button" class="widebtn" id="doneStats">Затвори</button></div></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -127,6 +199,7 @@ const STORAGE_KEY='grafik-v1-private-device';
 const MONTHS=['Януари','Февруари','Март','Април','Май','Юни','Юли','Август','Септември','Октомври','Ноември','Декември'];
 const SHORT_DAYS=['П','В','С','Ч','П','С','Н'];
 const BASIC=[['Р','На лице (празна клетка)'],['Н','Наряд'],['Б','Болничен'],['О','Отпуска'],['К','Компенсация'],['П','Почивка'],['Д','Друго отсъствие']];
+const EMBEDDED_ROSTER=[["Командване","лейт. Преслав Петров"],["Командване","ст. серж. Живка Попова"],["КИО","ст. серж. Мария Костова"],["КИО","ефр. Георги Мишев"],["КИО","ефр. Теодора Михова"],["Транспортно","серж. Андрей Андреев"],["Транспортно","р-к Господин Георгиев"],["Транспортно","р-к Константин Чавдаров"],["Транспортно","р-к Тома Христов"],["Транспортно","р-к Георги Иванов"],["Транспортно","р-к Светла Йорданова"],["Транспортно","р-к Теодора Атанасова"],["Ремонт и евакуация","ст. серж. Пламен Йотов"],["Ремонт и евакуация","ефр. Мирослав Янев"],["Ремонт и евакуация","р-к Стоян Колев"],["Ремонт и евакуация","р-к Васил Сурчев"],["Ремонт и евакуация","р-к Лъчезар Михнев"],["Ремонт и евакуация","р-к Александра Велкова"],["Ремонт и евакуация","р-к Неделина Йорданова"],["Ремонт и евакуация","р-к Галина Дънешка"]];
 const DUTIES=['ДБ','ПДБ','ДР','КПП','ДП1','ДП','В','ДП2','ПДП2','НК','Р','К1/1','К1/2','К1/3','К2/1','К2/2','К2/3','К3/1','К3/2','К3/3'];
 const HOLIDAYS_2026={'2026-01-01':'Нова година','2026-01-02':'Допълнителен неприсъствен ден','2026-03-03':'Ден на Освобождението','2026-04-10':'Велики петък','2026-04-11':'Велика събота','2026-04-12':'Великден','2026-04-13':'Великденски понеделник','2026-05-01':'Ден на труда','2026-05-06':'Гергьовден / Ден на храбростта','2026-05-24':'Ден на българската азбука','2026-05-25':'Допълнителен неприсъствен ден','2026-09-06':'Ден на Съединението','2026-09-07':'Допълнителен неприсъствен ден','2026-09-22':'Ден на Независимостта','2026-12-24':'Бъдни вечер','2026-12-25':'Коледа','2026-12-26':'Коледа','2026-12-28':'Допълнителен неприсъствен ден'};
 const $=id=>document.getElementById(id);
@@ -144,8 +217,189 @@ const validState=s=>s&&Array.isArray(s.people)&&s.statuses&&typeof s.statuses===
 let state;try{state=JSON.parse(localStorage.getItem(STORAGE_KEY))}catch{}
 if(!validState(state))state={people:[],statuses:{}};
 if(!state.people.every(p=>p&&typeof p.id==='string'&&typeof p.name==='string'))state.people=[];
+// For fresh installations the exact roster appears on every device, without registration.
+// Never replace names or duty records already saved in this browser.
+if(state.people.length===0){state.people=EMBEDDED_ROSTER.map(([group,name],i)=>({id:'v-oses-'+String(i+1).padStart(3,'0'),group,name}));try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch{}}
 const now=new Date();let selected=makeDate(now.getFullYear(),now.getMonth(),now.getDate());let start=monday(selected);let pickedPerson=null,pickedDate=null,choiceTab='base',toastTimer;
-function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('saveLabel').textContent='Запазено';$('saveDot').style.background='#9be4ab';$('savedTime').textContent='Автоматично';return true}catch(e){$('saveLabel').textContent='Грешка при запазване';$('saveDot').style.background='#ffc4c4';alert('Не успях да запазя данните. Провери дали не си в частен режим и дали има свободно пространство.');return false}}
+const VIEW_MODE_KEY='grafik-viewmode-v2';let viewMode='week';try{if(localStorage.getItem(VIEW_MODE_KEY)==='month')viewMode='month'}catch{}
+let previousTableView='',previousTableMonth='';
+
+// Firebase cloud synchronization. Firebase must be set up by the owner before it becomes active.
+// All local storage keys used by earlier versions are retained, so old schedules stay available.
+const FIREBASE_CFG_KEY='grafik-firebase-config-v1';
+const CLOUD_PENDING_PREFIX='grafik-cloud-pending-';
+const CLOUD_CONNECTED_PREFIX='grafik-cloud-connected-';
+const FB_SDK='13.3.0';
+const cloud={mode:'off',config:null,app:null,auth:null,db:null,uid:null,email:'',sdk:null,remotePeople:[],remoteStatuses:{},unsub:[],flushing:false,starting:false};
+function cloudMessage(text,kind='normal'){
+ const el=$('cloudFootText');if(el)el.textContent=text;
+ const status=$('cloudState');if(status)status.textContent=text;
+ if($('cloudDot'))$('cloudDot').style.background=kind==='success'?'#399359':kind==='error'?'#c54c48':'#b18d46';
+ if($('saveLabel')&&cloud.mode==='active')$('saveLabel').textContent=text;
+}
+function cloudFail(error){
+ const el=$('cloudError');if(!el)return;
+ const code=String(error?.code||'');
+ const messages={'auth/invalid-credential':'Неправилен имейл или парола.','auth/email-already-in-use':'Вече има такъв акаунт. Използвай „Влез“.','auth/weak-password':'Паролата трябва да е поне 6 символа.','auth/invalid-email':'Невалиден имейл адрес.','permission-denied':'Достъпът е отказан. Провери правилата в Cloud Firestore.','auth/operation-not-allowed':'Включи Email/Password във Firebase Authentication.'};
+ el.textContent=messages[code]||'Грешка: '+String(error?.message||error);
+ el.hidden=false;cloudMessage('Облачна грешка · локалното копие е запазено','error');
+}
+function hideCloudError(){$('cloudError').hidden=true;$('cloudError').textContent=''}
+function parseFirebaseConfig(raw){
+ let v=raw.trim();if(v.includes('firebaseConfig'))v=v.slice(v.indexOf('{'),v.lastIndexOf('}')+1);
+ v=v.replace(/([,{]\s*)([A-Za-z_$][\w$]*)\s*:/g,'$1"$2":').replace(/'/g,'"').replace(/,\s*}/g,'}');
+ const c=JSON.parse(v);
+ if(!c.apiKey||!c.projectId||!c.appId)throw Error('Липсват apiKey, projectId или appId в конфигурацията.');
+ return {apiKey:c.apiKey,authDomain:c.authDomain||c.projectId+'.firebaseapp.com',projectId:c.projectId,appId:c.appId,messagingSenderId:c.messagingSenderId||undefined,storageBucket:c.storageBucket||undefined};
+}
+function showCloudUI(){
+ const configured=!!cloud.config,logged=!!cloud.uid;
+ $('configSection').hidden=configured;
+ $('loginSection').hidden=!configured||logged;
+ $('linkedSection').hidden=!logged;
+ $('cloudUser').textContent=logged?('Свързан акаунт: '+cloud.email):'';
+ $('cloudDecision').hidden=cloud.mode!=='choose';
+}
+async function loadFirebaseSDK(){
+ if(cloud.sdk)return cloud.sdk;
+ const root=`https://www.gstatic.com/firebasejs/${FB_SDK}/`;
+ const [app,auth,firestore]=await Promise.all([import(root+'firebase-app.js'),import(root+'firebase-auth.js'),import(root+'firebase-firestore.js')]);
+ cloud.sdk={...app,...auth,...firestore};return cloud.sdk;
+}
+function stopCloudListeners(){for(const un of cloud.unsub){try{un()}catch{}}cloud.unsub=[]}
+async function connectFirebase(config){
+ cloud.config=config;cloud.mode='connecting';showCloudUI();cloudMessage('Свързване с Firebase...');
+ const sdk=await loadFirebaseSDK();
+ cloud.app=sdk.getApps().find(a=>a.name==='platoon-sync')||sdk.initializeApp(config,'platoon-sync');
+ cloud.auth=sdk.getAuth(cloud.app);cloud.db=sdk.getFirestore(cloud.app);
+ sdk.onAuthStateChanged(cloud.auth,async user=>{
+  if(!user){stopCloudListeners();cloud.uid=null;cloud.email='';cloud.mode='off';showCloudUI();cloudMessage('Влез в акаунта за синхронизация');return}
+  cloud.uid=user.uid;cloud.email=user.email||'';showCloudUI();
+  try{await initializeCloudSync()}catch(e){cloudFail(e)}
+ },cloudFail);
+}
+function rosterRef(){return cloud.sdk.doc(cloud.db,'users',cloud.uid,'profile','roster')}
+function cellsRef(){return cloud.sdk.collection(cloud.db,'users',cloud.uid,'cells')}
+function cellRef(key){return cloud.sdk.doc(cellsRef(),encodeURIComponent(key))}
+function pendingKey(){return CLOUD_PENDING_PREFIX+cloud.uid}
+function getPending(){try{const p=JSON.parse(localStorage.getItem(pendingKey()));if(p&&p.cells&&typeof p.cells==='object')return p}catch{}return {people:null,cells:{}}}
+function putPending(p){localStorage.setItem(pendingKey(),JSON.stringify(p))}
+function cloudKeepLocal(){localStorage.setItem(CLOUD_CONNECTED_PREFIX+cloud.uid,'true')}
+function cloudIsConnected(){return localStorage.getItem(CLOUD_CONNECTED_PREFIX+cloud.uid)==='true'}
+function localHasData(){return state.people.length>0||Object.values(state.statuses).some(s=>s&&s!=='Р')}
+function persistCloudState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch{}render()}
+function cloudOverlay(pending){
+ const ss={...cloud.remoteStatuses};for(const [key,item] of Object.entries(pending.cells||{})){if(item.code==='Р')delete ss[key];else ss[key]=item.code}
+ return ss;
+}
+function adoptRemote(){
+ const pending=getPending();
+ if(pending.people)state.people=pending.people;else state.people=structuredClone(cloud.remotePeople);
+ state.statuses=cloudOverlay(pending);
+ persistCloudState();
+}
+async function initializeCloudSync(){
+ if(cloud.starting||!cloud.uid)return;cloud.starting=true;stopCloudListeners();
+ cloud.mode='connecting';cloudMessage('Проверка на облачния график...');showCloudUI();
+ try{
+  const sdk=cloud.sdk;
+  const [roster,entries]=await Promise.all([sdk.getDocFromServer(rosterRef()),sdk.getDocsFromServer(cellsRef())]);
+  cloud.remotePeople=roster.exists()&&Array.isArray(roster.data().people)?roster.data().people:[];
+  cloud.remoteStatuses={};entries.forEach(item=>{const data=item.data();if(data.key&&data.code&&data.code!=='Р')cloud.remoteStatuses[data.key]=data.code});
+  const hasRemote=cloud.remotePeople.length>0||Object.keys(cloud.remoteStatuses).length>0;
+  if(hasRemote&&localHasData()&&!cloudIsConnected()){
+    cloud.mode='choose';showCloudUI();cloudMessage('Избери кой график да използваш');$('cloudDialog').showModal();return;
+  }
+  if(!hasRemote&&localHasData()){
+    cloud.mode='active';cloudKeepLocal();await uploadFullCloud();
+  }else{
+    cloud.mode='active';cloudKeepLocal();adoptRemote();
+  }
+  watchCloud();showCloudUI();cloudMessage('Синхронизирано','success');flushPending();
+ }finally{cloud.starting=false}
+}
+function watchCloud(){
+ stopCloudListeners();const sdk=cloud.sdk;
+ cloud.unsub.push(sdk.onSnapshot(rosterRef(),snap=>{
+   if(cloud.mode!=='active')return;
+   cloud.remotePeople=snap.exists()&&Array.isArray(snap.data().people)?snap.data().people:[];
+   adoptRemote();
+ },cloudFail));
+ cloud.unsub.push(sdk.onSnapshot(cellsRef(),snapshot=>{
+   if(cloud.mode!=='active')return;
+   cloud.remoteStatuses={};snapshot.forEach(item=>{const data=item.data();if(data.key&&data.code&&data.code!=='Р')cloud.remoteStatuses[data.key]=data.code});
+   adoptRemote();
+ },cloudFail));
+}
+function enqueueCell(key,code){
+ if(cloud.mode!=='active'||!cloud.uid)return;
+ const p=getPending();p.cells[key]={code,stamp:Date.now()};putPending(p);cloudMessage('Промяна за синхронизиране');flushPending();
+}
+function enqueueRoster(){
+ if(cloud.mode!=='active'||!cloud.uid)return;
+ const p=getPending();p.people={people:structuredClone(state.people),stamp:Date.now()};putPending(p);cloudMessage('Списъкът се синхронизира');flushPending();
+}
+async function flushPending(){
+ if(cloud.flushing||cloud.mode!=='active'||!navigator.onLine)return;
+ cloud.flushing=true;
+ try{
+  let p=getPending();
+  if(p.people){const item=p.people;await cloud.sdk.setDoc(rosterRef(),{people:item.people,updatedAt:cloud.sdk.serverTimestamp()});p=getPending();if(p.people?.stamp===item.stamp){p.people=null;putPending(p)}}
+  for(const [key,item] of Object.entries(getPending().cells)){
+   await cloud.sdk.setDoc(cellRef(key),{key,code:item.code,updatedAt:cloud.sdk.serverTimestamp()});
+   p=getPending();if(p.cells[key]?.stamp===item.stamp){delete p.cells[key];putPending(p)}
+  }
+  cloudMessage('Синхронизирано на всички устройства','success');
+ }catch(e){cloudMessage('Чака интернет · записано на устройството');if(navigator.onLine)cloudFail(e)}
+ finally{cloud.flushing=false}
+}
+async function uploadFullCloud(){
+ // Used only for first migration or after explicit approval; never overwrite remote silently.
+ const sdk=cloud.sdk;
+ await sdk.setDoc(rosterRef(),{people:structuredClone(state.people),updatedAt:sdk.serverTimestamp()});
+ const outgoing={};for(const [key,code] of Object.entries(state.statuses)){if(code&&code!=='Р')outgoing[key]=code}
+ const old=Object.keys(cloud.remoteStatuses);
+ for(const key of [...new Set([...old,...Object.keys(outgoing)])]){
+  const code=outgoing[key]||'Р';await sdk.setDoc(cellRef(key),{key,code,updatedAt:sdk.serverTimestamp()});
+ }
+ cloud.remotePeople=structuredClone(state.people);cloud.remoteStatuses={...outgoing};
+ putPending({people:null,cells:{}});
+}
+async function onChooseRemote(){
+ if(!confirm('Локалният списък и график ще бъдат заменени с облачните данни. Направи резервно копие, ако искаш да ги запазиш. Продължаваш ли?'))return;
+ cloud.mode='active';cloudKeepLocal();putPending({people:null,cells:{}});adoptRemote();watchCloud();showCloudUI();cloudMessage('Облачният график е зареден','success');
+}
+async function onChooseLocal(){
+ if(!confirm('Това ще замени текущия облачен график на всички устройства с данните от това устройство. Сигурен ли си?'))return;
+ try{cloud.mode='connecting';cloudMessage('Качване на локалния график...');await uploadFullCloud();cloud.mode='active';cloudKeepLocal();watchCloud();showCloudUI();cloudMessage('Локалният график е качен','success')}
+ catch(e){cloud.mode='choose';showCloudUI();cloudFail(e)}
+}
+function encodeConfig(c){return btoa(JSON.stringify(c)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function decodeConfig(v){const a=v.replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(a+'='.repeat((4-a.length%4)%4)))}
+async function cloudInitFromSaved(){
+ try{
+  const query=new URLSearchParams(location.search);let cfg=null;
+  if(query.has('fb')){cfg=decodeConfig(query.get('fb'));localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(cfg));history.replaceState(null,'',location.pathname+location.hash)}
+  else{const saved=localStorage.getItem(FIREBASE_CFG_KEY);if(saved)cfg=JSON.parse(saved)}
+  if(cfg){$('firebaseConfigField').value=JSON.stringify(cfg,null,2);await connectFirebase(cfg)}else showCloudUI();
+ }catch(e){cloudFail(e)}
+}
+$('saveFirebaseConfig').onclick=async()=>{hideCloudError();try{
+ const cfg=parseFirebaseConfig($('firebaseConfigField').value);localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(cfg));await connectFirebase(cfg);showCloudUI();cloudMessage('Проектът е свързан · влез в акаунта');
+}catch(e){cloudFail(e)}};
+$('cloudLogin').onclick=async()=>{hideCloudError();try{await cloud.sdk.signInWithEmailAndPassword(cloud.auth,$('cloudEmail').value.trim(),$('cloudPassword').value)}catch(e){cloudFail(e)}};
+$('cloudRegister').onclick=async()=>{hideCloudError();try{await cloud.sdk.createUserWithEmailAndPassword(cloud.auth,$('cloudEmail').value.trim(),$('cloudPassword').value)}catch(e){cloudFail(e)}};
+$('cloudLogout').onclick=async()=>{hideCloudError();try{await cloud.sdk.signOut(cloud.auth)}catch(e){cloudFail(e)}};
+$('cloudUseRemote').onclick=onChooseRemote;
+$('cloudUseLocal').onclick=onChooseLocal;
+$('cloudShareLink').onclick=async()=>{
+ const link=location.origin+location.pathname+'?fb='+encodeConfig(cloud.config);
+ try{await navigator.clipboard.writeText(link);notify('Линкът е копиран')}catch{prompt('Копирай линка:',link)}
+};
+window.addEventListener('online',()=>{if(cloud.mode==='active'){cloudMessage('Има интернет · синхронизация');flushPending()}else if(cloud.config&&cloud.uid&&cloud.mode!=='connecting')initializeCloudSync()});
+window.addEventListener('offline',()=>{if(cloud.mode==='active')cloudMessage('Без интернет · записва се на устройството')});
+
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('saveLabel').textContent=cloud.mode==='active'?'Запазено локално · синхронизиране':'Запазено на устройството';$('saveDot').style.background='#9be4ab';$('savedTime').textContent='Автоматично';return true}catch(e){$('saveLabel').textContent='Грешка при запазване';$('saveDot').style.background='#ffc4c4';alert('Не успях да запазя данните. Провери дали не си в частен режим и дали има свободно пространство.');return false}}
 function notify(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),1800)}
 function defaultStatus(d){return 'Р'}
 function statusOf(p,d){const stored=state.statuses[`${p.id}|${dateStr(d)}`];return typeof stored==='string'&&stored?stored:defaultStatus(d)}
@@ -154,6 +408,24 @@ function selectDate(d){selected=makeDate(d.getFullYear(),d.getMonth(),d.getDate(
 function changeMonth(delta){selectDate(makeDate(selected.getFullYear(),selected.getMonth()+delta,Math.min(selected.getDate(),new Date(selected.getFullYear(),selected.getMonth()+delta+1,0).getDate())))}
 function changeWeek(delta){const newStart=addDays(start,7*delta);selectDate(newStart)}
 function statusClass(status){return isDuty(status)?'duty':({Р:'presence',Б:'sick',О:'leave',К:'comp',П:'break',Д:'other'})[status]||''}
+function switchView(mode){
+ viewMode=mode==='month'?'month':'week';
+ try{localStorage.setItem(VIEW_MODE_KEY,viewMode)}catch{}
+ render();
+}
+function visibleDates(){
+ if(viewMode==='month')return Array.from({length:new Date(selected.getFullYear(),selected.getMonth()+1,0).getDate()},(_,i)=>makeDate(selected.getFullYear(),selected.getMonth(),i+1));
+ return Array.from({length:7},(_,i)=>addDays(start,i));
+}
+function scrollMonthToSelected(viewport){
+ if(viewMode!=='month')return;
+ const root=getComputedStyle(document.documentElement);
+ const col=parseFloat(root.getPropertyValue('--date-col-width'))||35;
+ const nameWidth=parseFloat(root.getPropertyValue('--name-col-width'))||137;
+ const visible=Math.max(1,Math.floor((viewport.clientWidth-nameWidth)/col));
+ const day=selected.getDate();
+ viewport.scrollLeft=Math.max(0,Math.round((day-Math.max(2,Math.floor(visible/2)))*col));
+}
 function render(){
  $('monthLabel').textContent=`${MONTHS[selected.getMonth()]} ${selected.getFullYear()}`;
  const ds=dateStr(selected),hol=holiday(selected);
@@ -164,32 +436,44 @@ function render(){
  $('metrics').replaceChildren(...stats.map(([label,value],idx)=>{const card=mk('div','surface metric'+(idx===1?' active':''));card.append(mk('div','label',label),mk('div','number',String(value)));return card}));
  $('details').replaceChildren(...[['НАРЯД',count.Н,'duty'],['БОЛНИЧЕН',count.Б,'sick'],['ОТПУСКА',count.О,'leave'],['КОМПЕНСАЦИЯ',count.К,'comp'],['ПОЧИВКА',count.П,''],['ДРУГО',count.Д,'']].map(([label,num,cls])=>{const chip=mk('div','detail '+cls);chip.append(document.createTextNode(label),mk('strong','',String(num||0)));return chip}));
  $('peopleCount').textContent=`${state.people.length} души`;
- const week=Array.from({length:7},(_,i)=>addDays(start,i));
- $('weekLabel').textContent=`${pad(week[0].getDate())}.${pad(week[0].getMonth()+1)} – ${pad(week[6].getDate())}.${pad(week[6].getMonth()+1)}`;
- const head=[$('dateHead')];const names=mk('div','namehead','ЛИЧЕН СЪСТАВ');$('dateHead').replaceChildren(names);
- for(const d of week){const weekend=dow(d)>=5;const dt=mk('div','');const btn=mk('button','datebutton'+(weekend?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));btn.type='button';btn.title=holiday(d)||dateStr(d);btn.setAttribute('aria-label',`${dateStr(d)}${holiday(d)?' · '+holiday(d):''}`);btn.append(mk('span','letter',SHORT_DAYS[dow(d)]),mk('span','num',String(d.getDate())));btn.onclick=()=>selectDate(d);dt.append(btn);$('dateHead').append(dt)}
- const roster=$('rosterRows'),viewport=$('rosterScroll'),scrollY=viewport.scrollTop;roster.replaceChildren();
+ const dates=visibleDates();
+ const rosterSection=$('scheduleSection'),viewport=$('rosterScroll');
+ rosterSection.classList.toggle('month-view',viewMode==='month');
+ rosterSection.classList.toggle('week-view',viewMode==='week');
+ rosterSection.style.setProperty('--visible-days',String(dates.length));
+ $('weekMode').classList.toggle('active',viewMode==='week');$('weekMode').setAttribute('aria-pressed',String(viewMode==='week'));
+ $('monthMode').classList.toggle('active',viewMode==='month');$('monthMode').setAttribute('aria-pressed',String(viewMode==='month'));
+ $('rosterTitle').textContent=viewMode==='month'?'Месечен график':'Седмичен график';
+ $('rosterHint').textContent=viewMode==='month'?'Плъзни датите, имената остават на място':'Избери клетка за промяна';
+ $('weekLabel').textContent=viewMode==='month'?`Целият ${MONTHS[selected.getMonth()].toLowerCase()} · ${dates.length} дни`:`${pad(dates[0].getDate())}.${pad(dates[0].getMonth()+1)} – ${pad(dates[6].getDate())}.${pad(dates[6].getMonth()+1)}`;
+ const names=mk('div','namehead','ЛИЧЕН СЪСТАВ');$('dateHead').replaceChildren(names);
+ for(const d of dates){const weekend=dow(d)>=5;const dt=mk('div','');const btn=mk('button','datebutton'+(weekend?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));btn.type='button';btn.title=holiday(d)||dateStr(d);btn.setAttribute('aria-label',`${dateStr(d)}${holiday(d)?' · '+holiday(d):''}`);btn.append(mk('span','letter',SHORT_DAYS[dow(d)]),mk('span','num',String(d.getDate())));btn.onclick=()=>selectDate(d);dt.append(btn);$('dateHead').append(dt)}
+ const roster=$('rosterRows'),scrollY=viewport.scrollTop,scrollX=viewport.scrollLeft;roster.replaceChildren();
  if(!state.people.length){const empty=mk('div','empty','Списъкът е празен. Добави личния състав, за да започнеш.');const button=mk('button','','Добави имена');button.type='button';button.onclick=openNames;empty.append(mk('div'),button);roster.append(empty)}else{
- let group=null;for(const p of state.people){if(p.group!==group){group=p.group;roster.append(mk('div','group-row',group||'Без група'))}
+ let group=null;for(const p of state.people){if(p.group!==group){group=p.group;const groupLine=mk('div','group-row');groupLine.append(mk('span','group-label',group||'Без група'));roster.append(groupLine)}
  const row=mk('div','row personrow');const name=mk('div','namecell');let match=p.name.match(/^(лейт\.|ст\.\s*серж\.?|мл\.\s*серж\.?|серж\.?|ефр\.?|р-к|ред\.?)\s+(.+)$/i);name.append(mk('span','rank',match?match[1]:' '),mk('span','personname',match?match[2]:p.name));name.title=p.name;row.append(name);
- for(const d of week){const holder=mk('div','gridcell'+(dow(d)>=5?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));const status=statusOf(p,d);const button=mk('button','statuscell '+statusClass(status),displayStatus(status));button.type='button';button.title=`${p.name} · ${dateStr(d)} · ${statusLabel(status)}`;button.setAttribute('aria-label',button.title);button.onclick=()=>openStatus(p,d);holder.append(button);row.append(holder)}roster.append(row)} }
+ for(const d of dates){const holder=mk('div','gridcell'+(dow(d)>=5?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));const status=statusOf(p,d);const button=mk('button','statuscell '+statusClass(status),displayStatus(status));button.type='button';button.title=`${p.name} · ${dateStr(d)} · ${statusLabel(status)}`;button.setAttribute('aria-label',button.title);button.onclick=()=>openStatus(p,d);holder.append(button);row.append(holder)}roster.append(row)} }
  viewport.scrollTop=scrollY;
- $('holidayInfo').textContent=hol?`★ ${hol} · ${pad(selected.getDate())}.${pad(selected.getMonth()+1)} · Докосни клетка за промяна.`:selected.getFullYear()===2026?'Празна клетка означава „На лице“. Събота и неделя са светлосиви; празниците са със златна линия.':'Празна клетка означава „На лице“. За тази година няма проверен списък с празници.';
+ const monthIdentity=`${selected.getFullYear()}-${selected.getMonth()}`;
+ if(viewMode==='month'&&(previousTableView!=='month'||previousTableMonth!==monthIdentity))scrollMonthToSelected(viewport);else viewport.scrollLeft=viewMode==='month'?scrollX:0;
+ previousTableView=viewMode;previousTableMonth=monthIdentity;
+ $('holidayInfo').textContent=hol?`★ ${hol} · ${pad(selected.getDate())}.${pad(selected.getMonth()+1)} · Докосни клетка за промяна.`:selected.getFullYear()===2026?'Празна клетка означава „На лице“. Събота и неделя са сиви; празниците са със златна линия.':'Празна клетка означава „На лице“. За тази година няма проверен списък с празници.';
 }
 function openStatus(person,date){pickedPerson=person;pickedDate=date;choiceTab='base';$('personTitle').textContent=person.name;$('statusDate').textContent=`${pad(date.getDate())}.${pad(date.getMonth()+1)}.${date.getFullYear()} · ${statusLabel(statusOf(person,date))}`;renderChoices();$('statusDialog').showModal()}
 function renderChoices(){for(const t of ['base','duty'])$(t+'Tab').classList.toggle('active',t===choiceTab);const options=choiceTab==='duty'?DUTIES.map(code=>['Н:'+code,code]):BASIC;const current=statusOf(pickedPerson,pickedDate);const container=$('choiceGrid');container.replaceChildren(...options.map(([code,label])=>{const button=mk('button',choiceTab==='duty'?'duty':'',choiceTab==='duty'?label:code);button.type='button';if(code===current)button.classList.add('chosen');if(choiceTab==='base')button.append(mk('small','',label));button.onclick=()=>setStatus(code);return button}))}
-function setStatus(code){const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];state.statuses[k]=code;if(!save()){if(previous===undefined)delete state.statuses[k];else state.statuses[k]=previous;return}selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);$('statusDialog').close();render();notify('Промяната е запазена')}
-function resetStatus(){const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];delete state.statuses[k];if(!save()){state.statuses[k]=previous;return}$('statusDialog').close();selectDate(pickedDate);notify('Изчистено · На лице')}
+function setStatus(code){const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];state.statuses[k]=code;if(!save()){if(previous===undefined)delete state.statuses[k];else state.statuses[k]=previous;return}enqueueCell(k,code);selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);$('statusDialog').close();render();notify('Промяната е запазена')}
+function resetStatus(){const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];delete state.statuses[k];if(!save()){state.statuses[k]=previous;return}enqueueCell(k,'Р');$('statusDialog').close();selectDate(pickedDate);notify('Изчистено · На лице')}
 function parsePeople(raw){const lines=raw.replace(/\u00a0/g,' ').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);const known=['Командване','КИО','Транспортно','Ремонт и евакуация'];let group='Командване';const out=[];for(const line of lines){if(line.includes('|')){const i=line.indexOf('|'),nextGroup=line.slice(0,i).trim(),name=line.slice(i+1).trim();if(nextGroup)group=nextGroup;if(name)out.push({group,name});continue}const heading=known.find(x=>x.toLocaleLowerCase('bg')===line.toLocaleLowerCase('bg'));if(heading){group=heading;continue}if(line===line.toLocaleUpperCase('bg')&&line.length<40&&!/\d/.test(line)){group=line;continue}out.push({group,name:line})}return out}
 function openNames(){if($('menuDialog').open)$('menuDialog').close();$('namesText').value=state.people.map(p=>p.group+' | '+p.name).join('\n');$('namesError').style.display='none';$('namesDialog').showModal()}
-function saveNames(){const parsed=parsePeople($('namesText').value);if(!parsed.length){$('namesError').textContent='Въведи поне един човек.';$('namesError').style.display='block';return}const old=state.people,matched=new Set();const people=parsed.map((entry,i)=>{const same=old.find(p=>p.name===entry.name&&p.group===entry.group&&!matched.has(p.id));if(same){matched.add(same.id);return same}return {id:'custom'+Date.now()+'_'+i,name:entry.name,group:entry.group}});state.people=people;if(!save()){state.people=old;return}$('namesDialog').close();render();notify('Списъкът е запазен')}
+function saveNames(){const parsed=parsePeople($('namesText').value);if(!parsed.length){$('namesError').textContent='Въведи поне един човек.';$('namesError').style.display='block';return}const old=state.people,matched=new Set();const people=parsed.map((entry,i)=>{const same=old.find(p=>p.name===entry.name&&p.group===entry.group&&!matched.has(p.id));if(same){matched.add(same.id);return same}return {id:'custom'+Date.now()+'_'+i,name:entry.name,group:entry.group}});state.people=people;if(!save()){state.people=old;return}enqueueRoster();$('namesDialog').close();render();notify('Списъкът е запазен')}
 function exportBackup(){const payload={...state,format:'grafik-v1',exportedAt:new Date().toISOString()};const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`grafik-rezervno-kopie-${dateStr(selected)}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);notify('Копието е готово за изтегляне')}
-async function importBackup(input){const file=input.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!validState(payload)||!payload.people.every(p=>p&&typeof p.id==='string'&&typeof p.name==='string'))throw Error('Невалиден формат на файла');if(!confirm('Да се замени текущият списък и график с резервното копие?'))return;const previous=state;state={people:payload.people,statuses:payload.statuses};if(!save()){state=previous;return}render();notify('Копието е възстановено')}catch(e){alert('Възстановяването не успя: '+e.message)}finally{input.value=''}}
-$('prevMonth').onclick=()=>changeMonth(-1);$('nextMonth').onclick=()=>changeMonth(1);$('today').onclick=()=>selectDate(makeDate(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()));$('prevWeek').onclick=()=>changeWeek(-1);$('nextWeek').onclick=()=>changeWeek(1);
+async function importBackup(input){const file=input.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!validState(payload)||!payload.people.every(p=>p&&typeof p.id==='string'&&typeof p.name==='string'))throw Error('Невалиден формат на файла');if(!confirm('Да се замени текущият списък и график с резервното копие?'))return;const previous=state;state={people:payload.people,statuses:payload.statuses};if(!save()){state=previous;return}if(cloud.mode==='active'){cloudMessage('Възстановеният график се качва...');await uploadFullCloud()}render();notify('Копието е възстановено')}catch(e){alert('Възстановяването не успя: '+e.message)}finally{input.value=''}}
+$('prevMonth').onclick=()=>changeMonth(-1);$('nextMonth').onclick=()=>changeMonth(1);$('today').onclick=()=>selectDate(makeDate(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()));$('prevWeek').onclick=()=>viewMode==='month'?changeMonth(-1):changeWeek(-1);$('nextWeek').onclick=()=>viewMode==='month'?changeMonth(1):changeWeek(1);
+$('weekMode').onclick=()=>switchView('week');$('monthMode').onclick=()=>switchView('month');
 $('closeStatus').onclick=()=>$('statusDialog').close();$('baseTab').onclick=()=>{choiceTab='base';renderChoices()};$('dutyTab').onclick=()=>{choiceTab='duty';renderChoices()};$('resetCell').onclick=resetStatus;
 $('editNames').onclick=openNames;$('cancelNames').onclick=()=>$('namesDialog').close();$('discardNames').onclick=()=>$('namesDialog').close();$('saveNames').onclick=saveNames;
 $('export').onclick=exportBackup;$('import').onclick=()=>$('backupFile').click();$('backupFile').onchange=e=>importBackup(e.target);
-$('cloudInfo').onclick=()=>{if($('menuDialog').open)$('menuDialog').close();$('cloudDialog').showModal()};$('closeCloud').onclick=()=>$('cloudDialog').close();$('doneCloud').onclick=()=>$('cloudDialog').close();
+$('cloudInfo').onclick=()=>{if($('menuDialog').open)$('menuDialog').close();hideCloudError();showCloudUI();$('cloudDialog').showModal()};$('closeCloud').onclick=()=>$('cloudDialog').close();$('doneCloud').onclick=()=>$('cloudDialog').close();
 // Clicks outside a bottom sheet close it (no editing is lost, edits save immediately).
 for(const id of ['statusDialog','namesDialog','cloudDialog']){const dialog=$(id);dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()})}
 
@@ -212,5 +496,6 @@ $('import').addEventListener('click',()=>{if($('menuDialog').open)$('menuDialog'
 for(const id of ['menuDialog','statsDialog']){const dialog=$(id);dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()})}
 
 render();
+cloudInitFromSaved();
 </script>
 </body></html>
