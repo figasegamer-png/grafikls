@@ -230,6 +230,20 @@ body.cloud-viewer .viewer-banner{display:flex}
 .expense-none{padding:18px;border-radius:12px;background:#f2f6f1;color:#536b5e;text-align:center;font-size:13px}
 @media(max-width:365px){.expense-row{padding:9px}.expense-reason{max-width:112px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.metric.expense-clickable{transition:none}}
+
+/* Clean entrance: two clearly separated actions, no secondary explanations. */
+.gate-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.gate-actions button{min-height:51px;border-radius:13px;padding:12px 9px;font-size:15px;font-weight:800;letter-spacing:.01em;transition:transform .15s ease,background .2s ease,box-shadow .2s ease}
+.gate-enter{background:#1c5741;border:1px solid #1c5741;color:white;box-shadow:0 4px 12px #17433329}
+.gate-view{background:#eff5f0;border:1px solid #b8d0bd;color:#20533e}
+.gate-actions button:active{transform:scale(.97)}
+.gate-actions button:disabled{opacity:.5;cursor:progress}
+.gate-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.cloud-access-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:4px;margin:16px 0 13px;background:#eaf1eb;border:1px solid #d5e3d9;border-radius:13px}
+.cloud-access-tabs button{border:0;border-radius:10px;min-height:43px;background:transparent;color:#416554;font-size:14px;font-weight:800;transition:background-color .2s ease,color .2s ease,box-shadow .2s ease}
+.cloud-access-tabs button.selected{background:#1c5741;color:white;box-shadow:0 2px 7px #1c574122}
+.cloud-access-tabs button:active{transform:scale(.985)}
+@media(prefers-reduced-motion:reduce){.gate-actions button,.cloud-access-tabs button{transition:none}}
 </style>
 </head>
 <body class="secure-locked">
@@ -246,10 +260,12 @@ body.cloud-viewer .viewer-banner{display:flex}
   </div>
 </header>
 <div class="access-gate" id="accessGate"><div class="gate-card"><div class="gate-symbol">▦</div>
-<h2>График на взвод „Осигуряване“</h2><p>Достъп само за одобрени военнослужещи. Редакторите влизат с имейл. Достъпът на наблюдателите ще се включи допълнително.</p>
-<p class="gate-state" id="teamSyncText">Първо настрой достъпа до общия график.</p>
-<button type="button" class="widebtn" id="gateSetup">☁ Свържи се / Влез</button>
-<p class="gate-note">Не публикувай списъка с имената в GitHub. Той се съхранява в защитената база след първоначалния импорт.</p>
+<h2>График на взвод „Осигуряване“</h2>
+<span class="gate-sr-only" id="teamSyncText" aria-live="polite">Проверка на достъпа</span>
+<div class="gate-actions">
+  <button type="button" id="gateSetup" class="gate-enter">Влез</button>
+  <button type="button" id="gateView" class="gate-view">Преглед</button>
+</div>
 </div></div>
 <main>
 <div class="viewer-banner" role="status" aria-live="polite"><div class="viewer-banner-icon" aria-hidden="true">◉</div><div><strong>САМО ПРЕГЛЕД</strong><span>Можеш да разглеждаш графика, но не и да правиш промени.</span></div></div>
@@ -284,22 +300,25 @@ body.cloud-viewer .viewer-banner{display:flex}
 </div></dialog>
 <dialog id="cloudDialog"><div class="sheet-overlay cloud-sheet"><div class="sheet-handle"></div>
   <div class="modal-top"><div><h2 class="modal-title">☁ Общ график</h2><div class="modal-sub" id="cloudState">Защитена синхронизация</div></div><button class="closemodal" id="closeCloud" type="button" aria-label="Затвори">×</button></div>
-  <div class="cloud-help">Командирът и заместникът влизат с имейл. Синхронизацията работи чрез Firebase Spark. Еднократните кодове за преглед ще се активират след допълнителна настройка.</div>
+  <div class="cloud-access-tabs" id="cloudAccessTabs" role="group" aria-label="Начин на достъп">
+    <button type="button" id="cloudTabEnter" class="selected" aria-pressed="true">Влез</button>
+    <button type="button" id="cloudTabView" aria-pressed="false">Преглед</button>
+  </div>
   <section class="cloud-panel" id="configSection"><label for="firebaseConfigField">Firebase проект (еднократно)</label>
    <textarea class="cloud-config" id="firebaseConfigField" rows="5" placeholder='Постави firebaseConfig от Firebase Console: {apiKey:"...",authDomain:"...",projectId:"...",appId:"...",messagingSenderId:"..."}'></textarea>
    <label for="cloudVapid">VAPID ключ за push известия (може да се добави по-късно)</label><input id="cloudVapid" placeholder="Web Push certificate key" autocomplete="off">
    <button class="widebtn" type="button" id="saveFirebaseConfig">Свържи проекта</button>
    <p class="cloud-hint">Администраторът трябва да включи Firebase Authentication, Firestore и правилата от приложения файл. Конфигурацията не е парола. Не добавяй лични имена тук.</p></section>
-  <section class="cloud-panel" id="loginSection" hidden><label>Вход за командир и заместник</label>
+  <section class="cloud-panel" id="loginSection" hidden><label>Влез с имейл</label>
    <input id="cloudEmail" type="email" inputmode="email" autocomplete="username" placeholder="Имейл">
    <input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Парола">
    <button type="button" id="cloudLogin" class="widebtn">Влез</button>
-   <p class="cloud-hint">Само за командира и заместника. Профилите и редакторските роли се създават във Firebase.</p></section>
-   <section class="cloud-panel" id="inviteSection" hidden style="display:none">
+  </section>
+   <section class="cloud-panel" id="inviteSection" hidden>
     <label for="viewerInvite">Еднократен код за разглеждане</label>
     <input id="viewerInvite" type="text" maxlength="32" inputmode="text" autocapitalize="characters" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" style="font-variant-numeric:tabular-nums;letter-spacing:1px;font-weight:700;text-transform:uppercase">
     <button type="button" id="redeemInvite" class="widebtn">Активирай достъп за това устройство</button>
-    <p class="cloud-hint">Не е нужен имейл. Кодът работи само веднъж. Достъпът остава запазен в този браузър; при изчистване на данните или смяна на устройство е нужен нов код.</p>
+    <p class="cloud-hint">Прегледът е само с индивидуален код. Издаването на кодове все още не е активирано; дотогава влизане за преглед не е възможно.</p>
    </section>
    <section class="cloud-panel" id="editorTools" hidden style="display:none">
     <label>Покани за личния състав</label>
@@ -409,14 +428,28 @@ function closeCloudAfterLogin(){
   dialog.classList.add('closing-success');
   setTimeout(()=>{if(dialog.open)dialog.close();dialog.classList.remove('closing-success')},270);
 }
+let cloudEntryTab='editor';
+function setCloudEntryTab(tab){
+  cloudEntryTab=tab==='viewer'?'viewer':'editor';
+  hideCloudError();
+  showCloudUI();
+}
 function showCloudUI(){
   const config=!!cloud.config,logged=!!cloud.uid;
-  $('accessGate').classList.toggle('checking',cloud.mode==='connecting');
-  $('gateSetup').disabled=cloud.mode==='connecting';
+  const checking=cloud.mode==='connecting';
+  $('accessGate').classList.toggle('checking',checking);
+  $('gateSetup').disabled=checking;
+  $('gateView').disabled=checking;
+  const showAuthChoices=config&&cloud.role!=='editor'&&cloud.role!=='viewer'&&!checking;
+  $('cloudAccessTabs').hidden=!showAuthChoices;
+  $('cloudTabEnter').classList.toggle('selected',cloudEntryTab==='editor');
+  $('cloudTabView').classList.toggle('selected',cloudEntryTab==='viewer');
+  $('cloudTabEnter').setAttribute('aria-pressed',String(cloudEntryTab==='editor'));
+  $('cloudTabView').setAttribute('aria-pressed',String(cloudEntryTab==='viewer'));
   $('configSection').hidden=config;
-  // Не показвай формата за вход, докато Firebase възстановява запомнената сесия.
-  $('loginSection').hidden=!config||cloud.role==='editor'||cloud.mode==='connecting';
-  $('inviteSection').hidden=!config||cloud.role==='editor'||cloud.role==='viewer';
+  // Firebase access roles continue to be validated server-side.
+  $('loginSection').hidden=!showAuthChoices||cloudEntryTab!=='editor';
+  $('inviteSection').hidden=!showAuthChoices||cloudEntryTab!=='viewer';
   $('editorTools').hidden=cloud.role!=='editor';
   $('linkedSection').hidden=!logged;
   $('cloudDecision').hidden=cloud.mode!=='choose';
@@ -475,7 +508,7 @@ async function initializeTeam(){
   if(seq!==cloud.initSeq)return;
   const role=grant.exists()?grant.data().role:null;
   if(role!=='editor'&&role!=='viewer'){
-    cloud.role=null;cloud.mode='denied';setLoginBusy(false);cloudMessage('За преглед въведи еднократен код, за редакция влез с командирски профил');showCloudUI();return;
+    cloud.role=null;cloud.mode='denied';setLoginBusy(false);cloudMessage('Няма активен достъп. Избери Влез или Преглед.');showCloudUI();return;
   }
   cloud.role=role;
   const [rosterSnap,cellSnaps]=await Promise.all([sdk.getDoc(rosterRef()),sdk.getDocs(cellsRef())]);
@@ -589,7 +622,7 @@ async function connectFirebase(c){
     cloud.initialized=true;
     sdk.onAuthStateChanged(cloud.auth,async user=>{
       cloud.initSeq++;stopCloudListeners();lockSchedule();cloud.role=null;
-      if(!user){cloud.uid=null;cloud.role=null;cloud.mode='off';cloud.email='';setLoginBusy(false);showCloudUI();cloudMessage('Влез като редактор или въведи еднократен код');return;}
+      if(!user){cloud.uid=null;cloud.role=null;cloud.mode='off';cloud.email='';setLoginBusy(false);showCloudUI();cloudMessage('Избери Влез или Преглед');return;}
       cloud.uid=user.uid;cloud.email=user.email||'';showCloudUI();
       try{await initializeTeam()}catch(e){cloud.mode='error';cloudFail(e)}
     },cloudFail);
@@ -630,7 +663,10 @@ $('notifications').onclick=()=>{
 };
 $('closeNotices').onclick=()=>$('noticeDialog').close();
 $('noticeDialog').addEventListener('click',e=>{if(e.target===$('noticeDialog'))$('noticeDialog').close()});
-$('gateSetup').onclick=()=>{hideCloudError();showCloudUI();$('cloudDialog').showModal()};
+$('gateSetup').onclick=()=>{setCloudEntryTab('editor');$('cloudDialog').showModal()};
+$('gateView').onclick=()=>{setCloudEntryTab('viewer');$('cloudDialog').showModal()};
+$('cloudTabEnter').onclick=()=>setCloudEntryTab('editor');
+$('cloudTabView').onclick=()=>setCloudEntryTab('viewer');
 $('saveFirebaseConfig').onclick=async()=>{
   hideCloudError();try{
     const c=parseFirebaseConfig($('firebaseConfigField').value);localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(c));await connectFirebase(c);
