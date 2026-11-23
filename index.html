@@ -146,8 +146,8 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
 
 /* Team access gate and notification history */
 body:not(.cloud-ready)>header,body:not(.cloud-ready)>main,body:not(.cloud-ready)>.bottom-nav{display:none!important}
-body.cloud-ready #accessGate{display:none!important}
-.access-gate{min-height:100dvh;display:flex;justify-content:center;align-items:center;padding:24px;background:linear-gradient(155deg,#133b2b,#295541)}
+body.cloud-ready #accessGate{opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.025);transition:opacity .48s ease,transform .48s ease,visibility 0s linear .48s}
+.access-gate{position:fixed;inset:0;z-index:25;min-height:100dvh;display:flex;justify-content:center;align-items:center;padding:24px;overflow-y:auto;background:linear-gradient(155deg,#133b2b,#295541);opacity:1;visibility:visible;transform:scale(1);transition:opacity .48s ease,transform .48s ease}
 .gate-card{max-width:420px;width:100%;padding:28px 24px;background:#fafcf8;border-radius:22px;border:1px solid #d2dfd2;box-shadow:0 15px 38px #0b281d55;text-align:center}
 .gate-card h2{font-size:23px;line-height:1.23;margin:0 0 13px;color:#1b4534}
 .gate-card p{font-size:14px;color:#526b5a;line-height:1.52}
@@ -166,6 +166,70 @@ body.cloud-viewer #navPeople,body.cloud-viewer #editNames,body.cloud-viewer #exp
 [hidden]{display:none!important}
 #enablePush{margin-top:9px}
 @media(max-width:390px){.team-role{font-size:10px}.notice-btn{min-width:36px;min-height:36px;font-size:17px}}
+
+/* Smooth sign-in and a clear read-only state – no change to Firebase access rules. */
+@keyframes appReveal{from{opacity:0;transform:translateY(12px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes gateCardReveal{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes authPulse{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:1;transform:scale(1.07)}}
+@keyframes cloudSheetRise{from{opacity:.2;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cloudSheetExit{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(22px)}}
+@keyframes cloudBackdropExit{from{opacity:1}to{opacity:0}}
+body.cloud-ready>header,body.cloud-ready>main,body.cloud-ready>.bottom-nav{animation:appReveal .47s cubic-bezier(.2,.8,.2,1) both}
+body.cloud-ready>main{animation-delay:.04s}
+body.cloud-ready>.bottom-nav{animation-delay:.1s}
+.gate-card{animation:gateCardReveal .42s cubic-bezier(.2,.8,.2,1) both}
+.gate-symbol{transition:transform .35s ease,box-shadow .35s ease}
+.access-gate.checking .gate-symbol{animation:authPulse 1.5s ease-in-out infinite;box-shadow:0 0 0 8px #d5edd50f}
+.access-gate.checking #gateSetup{opacity:.65;pointer-events:none}
+#cloudDialog[open] .sheet-overlay{animation:cloudSheetRise .34s cubic-bezier(.2,.8,.2,1) both}
+#cloudDialog.closing-success .sheet-overlay{animation:cloudSheetExit .26s ease-in both}
+#cloudDialog.closing-success::backdrop{animation:cloudBackdropExit .26s ease-in both}
+#cloudLogin{position:relative;transition:background-color .18s ease,transform .18s ease,opacity .18s ease}
+#cloudLogin:not(:disabled):active{transform:scale(.985)}
+#cloudLogin:disabled{opacity:.78;cursor:progress}
+#cloudLogin.busy:before{content:'';display:inline-block;width:13px;height:13px;border:2px solid #a4c3ad;border-top-color:#1c5747;border-radius:50%;vertical-align:-2px;margin-right:9px;animation:busySpin .7s linear infinite}
+@keyframes busySpin{to{transform:rotate(360deg)}}
+.team-role{background:#ffffff1a;border:1px solid #ffffff35;border-radius:8px;padding:6px 8px;letter-spacing:.045em;font-size:10px}
+body.cloud-viewer .team-role{background:#f3edc5;color:#314c32;border-color:#e2dba6;font-weight:850}
+.viewer-banner{display:none;align-items:center;gap:11px;border:1px solid #b9cbb9;border-radius:13px;background:#ecf4eb;padding:10px 12px;margin-bottom:10px;color:#184a34}
+body.cloud-viewer .viewer-banner{display:flex}
+.viewer-banner-icon{display:grid;place-items:center;width:35px;height:35px;flex:0 0 35px;border-radius:10px;background:#20523e;color:#fff;font-size:19px}
+.viewer-banner strong{display:block;font-size:12px;letter-spacing:.05em}
+.viewer-banner span{font-size:11px;color:#536d5b}
+@media(prefers-reduced-motion:reduce){
+ body.cloud-ready>header,body.cloud-ready>main,body.cloud-ready>.bottom-nav,.gate-card,#cloudDialog[open] .sheet-overlay,#cloudDialog.closing-success .sheet-overlay,#cloudDialog.closing-success::backdrop,.access-gate.checking .gate-symbol,#cloudLogin.busy:before{animation:none!important}
+ body.cloud-ready #accessGate{transition:none!important}
+}
+
+/* Detailed absent-person report, available to both editors and view-only users. */
+.metric.expense-clickable{appearance:none;display:block;width:100%;position:relative;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid #d2e0d4;transition:background .18s ease,box-shadow .18s ease,transform .18s ease}
+.metric.expense-clickable:hover{background:#eff6f0;box-shadow:0 3px 12px #173d3020}
+.metric.expense-clickable:active{transform:scale(.985)}
+.metric.expense-clickable .expense-arrow{position:absolute;right:9px;top:9px;font-size:19px;line-height:1;color:#2c654a;font-weight:800}
+.metric.expense-clickable .expense-tap{display:block;font-size:9px;color:#60806b;margin-top:5px;font-weight:650}
+#statsDialog .stat-stack>button{appearance:none;display:flex;flex-direction:column;align-items:flex-start;min-width:0;text-align:left;font:inherit;background:#e8f2e8;border:1px solid #9cbfa7;border-radius:12px;padding:11px;cursor:pointer;color:#345a44;position:relative}
+#statsDialog .stat-stack>button strong{font-size:24px;color:#224c37;margin-top:5px}
+#statsDialog .stat-stack>button:focus-visible{outline:3px solid #528e6c;outline-offset:2px}
+#statsDialog .stat-stack>button::after{content:'›';position:absolute;right:12px;top:11px;font-size:20px;font-weight:800;color:#2a694a}
+#statsOverview[hidden],#expenseListView[hidden]{display:none!important}
+.expense-head{display:flex;gap:9px;align-items:center;justify-content:space-between;margin:15px 0 8px}
+.expense-head h3{font-size:17px;font-weight:800;line-height:1.3;margin:0;color:#19432f}
+.expense-head .expense-total{font-size:11px;font-weight:800;background:#e4efe6;color:#28573c;border-radius:999px;padding:7px 10px;white-space:nowrap}
+.expense-back{border:1px solid #c4d6c8;border-radius:10px;background:#eff5ef;color:#295740;min-height:40px;padding:7px 12px;font-weight:750;font-size:12px;margin:8px 0 4px;display:flex;align-items:center;gap:5px}
+.expense-rows{display:grid;gap:8px;margin:12px 0 6px}
+.expense-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;background:#f9fbf8;border:1px solid #d8e5da;border-radius:12px;padding:11px 12px;min-height:60px}
+.expense-person{min-width:0;overflow-wrap:anywhere}
+.expense-person strong{font-size:13px;display:block;color:#203e2d;line-height:1.35}
+.expense-person small{display:block;color:#708477;font-size:10px;line-height:1.4;margin-top:3px}
+.expense-reason{font-size:11px;font-weight:800;line-height:1.35;color:#32533e;background:#e8eee8;border:1px solid #d6e3d7;border-radius:9px;padding:8px 9px;max-width:133px;text-align:right;overflow-wrap:anywhere}
+.expense-reason.duty{background:#f0edce;color:#665122;border-color:#e5dcae}
+.expense-reason.sick{background:#fae2e0;color:#9b3f37;border-color:#ebccca}
+.expense-reason.leave{background:#e3edfc;color:#405e90;border-color:#d1dff6}
+.expense-reason.trip{background:#dceee1;color:#256e46;border-color:#c7e1cd}
+.expense-reason.break{background:#e5e9e5;color:#456454;border-color:#d3dad3}
+.expense-none{padding:18px;border-radius:12px;background:#f2f6f1;color:#536b5e;text-align:center;font-size:13px}
+@media(max-width:365px){.expense-row{padding:9px}.expense-reason{max-width:112px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.metric.expense-clickable{transition:none}}
 </style>
 </head>
 <body class="secure-locked">
@@ -188,6 +252,7 @@ body.cloud-viewer #navPeople,body.cloud-viewer #editNames,body.cloud-viewer #exp
 <p class="gate-note">Не публикувай списъка с имената в GitHub. Той се съхранява в защитената база след първоначалния импорт.</p>
 </div></div>
 <main>
+<div class="viewer-banner" role="status" aria-live="polite"><div class="viewer-banner-icon" aria-hidden="true">◉</div><div><strong>САМО ПРЕГЛЕД</strong><span>Можеш да разглеждаш графика, но не и да правиш промени.</span></div></div>
 <section class="surface monthbar"><button type="button" class="icon-button" id="prevMonth" aria-label="Предишен месец">‹</button><div><div class="monthtitle" id="monthLabel"></div><div class="subtitle" id="activeDate"></div></div><div class="center-buttons"><button type="button" class="small-button" id="today">Днес</button><button type="button" class="icon-button" id="nextMonth" aria-label="Следващ месец">›</button></div></section>
 <div class="metrics" id="metrics"></div>
 <div class="details" id="details"></div>
@@ -254,7 +319,10 @@ body.cloud-viewer #navPeople,body.cloud-viewer #editNames,body.cloud-viewer #exp
   <button class="widebtn secondary" id="doneCloud" type="button">Затвори</button>
 </div></dialog>
 <dialog id="noticeDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">🔔 Промени в графика</h2><div class="modal-sub">Последни актуализации</div></div><button class="closemodal" id="closeNotices" type="button">×</button></div><div id="noticeItems" class="notice-list"><p>Няма известия.</p></div><p class="cloud-hint">За push известия при затворено приложение активирай опцията в ☰ → Облачна синхронизация. На iPhone отвори сайта от началния екран.</p></div></dialog>
-<dialog id="statsDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">Справка за деня</h2><div class="modal-sub" id="statsDate">Избрана дата</div></div><button type="button" class="closemodal" id="closeStats">×</button></div><p class="stats-explainer">Празните клетки се броят като „На лице“. Всички обозначения на наряд се сумират в показателя „Наряд“.</p><div class="stat-stack" id="statsDetails"></div><button type="button" class="widebtn" id="doneStats">Затвори</button></div></dialog>
+<dialog id="statsDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title" id="statsTitle">Справка за деня</h2><div class="modal-sub" id="statsDate">Избрана дата</div></div><button type="button" class="closemodal" id="closeStats" aria-label="Затвори">×</button></div>
+<div id="statsOverview"><p class="stats-explainer">Празните клетки се броят като „На лице“. Всички обозначения на наряд се сумират в показателя „Наряд“. Натисни „Разход“, за да видиш кои военнослужещи отсъстват.</p><div class="stat-stack" id="statsDetails"></div></div>
+<div id="expenseListView" hidden><button type="button" class="expense-back" id="backToStats">‹ Към справката</button><div class="expense-head"><h3>Личен състав в разход</h3><span class="expense-total" id="expenseTotal"></span></div><div class="expense-rows" id="expenseRows"></div></div>
+<button type="button" class="widebtn" id="doneStats">Затвори</button></div></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
@@ -264,7 +332,7 @@ const MONTHS=['Януари','Февруари','Март','Април','Май'
 const SHORT_DAYS=['П','В','С','Ч','П','С','Н'];
 const BASIC=[['Р','На лице (празна клетка)'],['Н','Наряд'],['Б','Болничен'],['О','Отпуска'],['КМ','Командировка'],['П','Почивка'],['Д','Друго отсъствие']];
 const EMBEDDED_ROSTER=[]; // Names are private: only in Firestore after approved login. 
-const DUTIES=['ДБ','ПДБ','ДР','КПП','ДП1','ДП','В','ДП2','ПДП2','НК','Р','К1/1','К1/2','К1/3','К2/1','К2/2','К2/3','К3/1','К3/2','К3/3'];
+const DUTIES=['ДБ','ПДБ','ДР','КПП','ДП1','ДП','В','ДП2','ПДП2','НК','Р','К1/1','К1/2','К1/3','К2/1','К2/2','К2/3','К3/1','К3/2','К3/3','ДСЗ','ППЗ'];
 const HOLIDAYS_2026={'2026-01-01':'Нова година','2026-01-02':'Допълнителен неприсъствен ден','2026-03-03':'Ден на Освобождението','2026-04-10':'Велики петък','2026-04-11':'Велика събота','2026-04-12':'Великден','2026-04-13':'Великденски понеделник','2026-05-01':'Ден на труда','2026-05-06':'Гергьовден / Ден на храбростта','2026-05-24':'Ден на българската азбука','2026-05-25':'Допълнителен неприсъствен ден','2026-09-06':'Ден на Съединението','2026-09-07':'Допълнителен неприсъствен ден','2026-09-22':'Ден на Независимостта','2026-12-24':'Бъдни вечер','2026-12-25':'Коледа','2026-12-26':'Коледа','2026-12-28':'Допълнителен неприсъствен ден'};
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
@@ -310,11 +378,14 @@ function cloudMessage(message,kind='normal'){
   if(kind==='error'&&$('saveLabel'))$('saveLabel').textContent='Проблем със синхронизацията';
 }
 function cloudFail(error){
+  setLoginBusy(false);
   console.error('График: облачна грешка',error);
   const code=String(error?.code||'');
   const messages={'auth/invalid-credential':'Невалиден имейл или парола.','auth/invalid-email':'Невалиден имейл.','permission-denied':'Firebase отказва достъп. Провери ролята и правилата в Firestore.','auth/operation-not-allowed':'Активирай Email/Password във Firebase Authentication.','auth/unauthorized-domain':'Добави figasegamer-png.github.io в Authentication → Settings → Authorized domains.','auth/web-storage-unsupported':'Браузърът не разрешава постоянно запазване на входа. Изключи частния режим и разреши данните на сайта.'};
   $('cloudError').textContent=messages[code]||String(error?.message||error);
-  $('cloudError').hidden=false;cloudMessage('Неуспешно свързване','error');
+  $('cloudError').hidden=false;
+  if(cloud.mode==='connecting'){cloud.mode='error';showCloudUI()}
+  cloudMessage('Неуспешно свързване · отвори настройките за подробности','error');
 }
 function hideCloudError(){$('cloudError').hidden=true;$('cloudError').textContent=''}
 function parseFirebaseConfig(raw){
@@ -325,8 +396,23 @@ function parseFirebaseConfig(raw){
   return {apiKey:c.apiKey,authDomain:c.authDomain||c.projectId+'.firebaseapp.com',projectId:c.projectId,appId:c.appId,messagingSenderId:c.messagingSenderId||'',vapidKey:c.vapidKey||$('cloudVapid').value.trim()||''};
 }
 function currentFirebaseConfig(){const c=cloud.config||{};return {apiKey:c.apiKey,authDomain:c.authDomain,projectId:c.projectId,appId:c.appId,messagingSenderId:c.messagingSenderId}}
+function setLoginBusy(busy){
+  const btn=$('cloudLogin');if(!btn)return;
+  btn.disabled=!!busy;btn.classList.toggle('busy',!!busy);
+  btn.textContent=busy?'Влизане…':'Влез';
+}
+function closeCloudAfterLogin(){
+  const dialog=$('cloudDialog');
+  setLoginBusy(false);
+  if(!dialog.open)return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){dialog.close();return}
+  dialog.classList.add('closing-success');
+  setTimeout(()=>{if(dialog.open)dialog.close();dialog.classList.remove('closing-success')},270);
+}
 function showCloudUI(){
   const config=!!cloud.config,logged=!!cloud.uid;
+  $('accessGate').classList.toggle('checking',cloud.mode==='connecting');
+  $('gateSetup').disabled=cloud.mode==='connecting';
   $('configSection').hidden=config;
   // Не показвай формата за вход, докато Firebase възстановява запомнената сесия.
   $('loginSection').hidden=!config||cloud.role==='editor'||cloud.mode==='connecting';
@@ -334,7 +420,7 @@ function showCloudUI(){
   $('editorTools').hidden=cloud.role!=='editor';
   $('linkedSection').hidden=!logged;
   $('cloudDecision').hidden=cloud.mode!=='choose';
-  $('cloudUser').textContent=logged?`${cloud.email||'Устройство без имейл'} · ${cloud.role==='editor'?'Редактор':cloud.role==='viewer'?'Само преглед':'Кодът не е активиран'}`:'';
+  $('cloudUser').textContent=logged?`${cloud.email||'Устройство без имейл'} · ${cloud.role==='editor'?'Редактор':cloud.role==='viewer'?'САМО ПРЕГЛЕД':'Кодът не е активиран'}`:'';
   $('cloudUseLocal').hidden=cloud.role!=='editor';
   $('enablePush').hidden=!cloud.ready;
   $('cloudVapid').value=cloud.config?.vapidKey||$('cloudVapid').value;
@@ -344,7 +430,7 @@ function unlockSchedule(){
   cloud.ready=true;document.body.classList.add('cloud-ready');
   document.body.classList.toggle('cloud-editor',cloud.role==='editor');
   document.body.classList.toggle('cloud-viewer',cloud.role==='viewer');
-  $('teamRoleText').textContent=cloud.role==='editor'?'Редактор':'Само преглед';
+  $('teamRoleText').textContent=cloud.role==='editor'?'РЕДАКТОР':'САМО ПРЕГЛЕД';
   if(cloud.role==='viewer'){$('editNames').hidden=true;$('import').hidden=true;$('export').hidden=true;$('navPeople').hidden=true;}
   else{$('editNames').hidden=false;$('import').hidden=false;$('export').hidden=false;$('navPeople').hidden=false;}
   showCloudUI();render();
@@ -389,7 +475,7 @@ async function initializeTeam(){
   if(seq!==cloud.initSeq)return;
   const role=grant.exists()?grant.data().role:null;
   if(role!=='editor'&&role!=='viewer'){
-    cloud.role=null;cloud.mode='denied';cloudMessage('За преглед въведи еднократен код, за редакция влез с командирски профил');showCloudUI();return;
+    cloud.role=null;cloud.mode='denied';setLoginBusy(false);cloudMessage('За преглед въведи еднократен код, за редакция влез с командирски профил');showCloudUI();return;
   }
   cloud.role=role;
   const [rosterSnap,cellSnaps]=await Promise.all([sdk.getDoc(rosterRef()),sdk.getDocs(cellsRef())]);
@@ -405,8 +491,8 @@ async function initializeTeam(){
 }
 function activateTeam(){
   cloud.mode='active';markConnected();adoptRemote();unlockSchedule();watchTeam();flushPending();
-  cloudMessage('Синхронизирано · '+(cloud.role==='editor'?'редактиране':'само преглед'),'success');
-  if($('cloudDialog').open)$('cloudDialog').close();
+  cloudMessage('Синхронизирано · '+(cloud.role==='editor'?'редактиране':'САМО ПРЕГЛЕД'),'success');
+  closeCloudAfterLogin();
 }
 function watchTeam(){
   stopCloudListeners();const sdk=cloud.sdk;
@@ -503,14 +589,14 @@ async function connectFirebase(c){
     cloud.initialized=true;
     sdk.onAuthStateChanged(cloud.auth,async user=>{
       cloud.initSeq++;stopCloudListeners();lockSchedule();cloud.role=null;
-      if(!user){cloud.uid=null;cloud.role=null;cloud.mode='off';cloud.email='';showCloudUI();cloudMessage('Влез като редактор или въведи еднократен код');return;}
+      if(!user){cloud.uid=null;cloud.role=null;cloud.mode='off';cloud.email='';setLoginBusy(false);showCloudUI();cloudMessage('Влез като редактор или въведи еднократен код');return;}
       cloud.uid=user.uid;cloud.email=user.email||'';showCloudUI();
       try{await initializeTeam()}catch(e){cloud.mode='error';cloudFail(e)}
     },cloudFail);
   }
 }
 async function cloudInitFromSaved(){
-  lockSchedule();try{
+  lockSchedule();cloud.mode='connecting';showCloudUI();cloudMessage('Проверяваме запазения вход…');try{
     const url=new URL(location.href);let cfg=null;
     if(url.searchParams.has('teamfb')){
       cfg=decodeConfig(url.searchParams.get('teamfb'));localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(cfg));url.searchParams.delete('teamfb');history.replaceState(null,'',url.pathname+url.search+url.hash);
@@ -550,7 +636,7 @@ $('saveFirebaseConfig').onclick=async()=>{
     const c=parseFirebaseConfig($('firebaseConfigField').value);localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(c));await connectFirebase(c);
   }catch(e){cloudFail(e)}
 };
-$('cloudLogin').onclick=async()=>{hideCloudError();try{
+$('cloudLogin').onclick=async()=>{hideCloudError();setLoginBusy(true);try{
   if(!cloud.auth)throw Error('Първо настрой Firebase проекта.');
   // Винаги запази влизането на това устройство; само „Изход“ ще го прекрати.
   await cloud.sdk.setPersistence(cloud.auth,cloud.sdk.browserLocalPersistence);
@@ -657,7 +743,12 @@ function render(){
  let count={Р:0,Н:0,Б:0,О:0,КМ:0,П:0,Д:0};
  for(const p of state.people){const status=statusOf(p,selected),kind=isDuty(status)?'Н':status==='К'?'Д':status;count[kind]=(count[kind]||0)+1}
  const stats=[['ПО СПИСЪК',state.people.length],['НА ЛИЦЕ',count.Р||0],['РАЗХОД',state.people.length-(count.Р||0)]];
- $('metrics').replaceChildren(...stats.map(([label,value],idx)=>{const card=mk('div','surface metric'+(idx===1?' active':''));card.append(mk('div','label',label),mk('div','number',String(value)));return card}));
+ $('metrics').replaceChildren(...stats.map(([label,value],idx)=>{
+  const card=mk(idx===2?'button':'div','surface metric'+(idx===1?' active':'')+(idx===2?' expense-clickable':''));
+  if(idx===2){card.type='button';card.setAttribute('aria-label',`Разход: ${value}. Виж кои са в разход за избрания ден.`);card.onclick=()=>openStats('expense');card.append(mk('span','expense-arrow','›'))}
+  card.append(mk('div','label',label),mk('div','number',String(value)));
+  if(idx===2)card.append(mk('span','expense-tap','Виж хората'));
+  return card}));
  $('details').replaceChildren(...[['НАРЯД',count.Н,'duty'],['БОЛНИЧЕН',count.Б,'sick'],['ОТПУСКА',count.О,'leave'],['КОМАНДИРОВКА',count.КМ,'trip'],['ПОЧИВКА',count.П,''],['ДРУГО',count.Д,'']].map(([label,num,cls])=>{const chip=mk('div','detail '+cls);chip.append(document.createTextNode(label),mk('strong','',String(num||0)));return chip}));
  $('peopleCount').textContent=`${state.people.length} души`;
  const dates=visibleDates();
@@ -705,15 +796,53 @@ $('menuToggle').onclick=()=>$('menuDialog').showModal();
 $('closeMenu').onclick=()=>$('menuDialog').close();
 $('navPeople').onclick=openNames;
 $('navSchedule').onclick=()=>{$('scheduleSection').scrollIntoView({behavior:'smooth',block:'start'})};
-function openStats(){
-  const values=[...$('metrics').querySelectorAll('.metric')].map(el=>[el.querySelector('.label').textContent,el.querySelector('.number').textContent]);
-  const detailValues=[...$('details').querySelectorAll('.detail')].map(el=>[el.childNodes[0].textContent.trim(),el.querySelector('strong').textContent]);
-  $('statsDate').textContent=$('activeDate').textContent;
-  const box=$('statsDetails');box.replaceChildren();
-  for(const [label,n] of [...values,...detailValues]){const item=mk('div','');item.append(mk('span','',label),mk('strong','',n));box.append(item)}
-  $('statsDialog').showModal();
+function expenseReason(status){
+ if(isDuty(status))return status==='Н'?'Наряд':`Наряд · ${status.slice(2)}`;
+ if(status==='Б')return 'Болничен';
+ if(status==='О')return 'Отпуска';
+ if(status==='КМ')return 'Командировка';
+ if(status==='П')return 'По · Почивка';
+ if(status==='Д'||status==='К')return 'Друго';
+ return statusLabel(status);
 }
-$('navStats').onclick=openStats;
+function showExpenseView(){
+ $('statsTitle').textContent='Разход за деня';
+ $('statsOverview').hidden=true;
+ $('expenseListView').hidden=false;
+ const absent=state.people.map(p=>({p,status:statusOf(p,selected)})).filter(item=>item.status!=='Р');
+ $('expenseTotal').textContent=`${absent.length} ${absent.length===1?'човек':'души'}`;
+ const area=$('expenseRows');area.replaceChildren();
+ if(!absent.length){area.append(mk('p','expense-none','Няма военнослужещи в разход за избраната дата.'));return}
+ for(const {p,status} of absent){
+  const row=mk('div','expense-row');
+  const who=mk('div','expense-person');who.append(mk('strong','',p.name),mk('small','',p.group||'Личен състав'));
+  const reason=mk('span','expense-reason '+statusClass(status),expenseReason(status));
+  row.append(who,reason);area.append(row);
+ }
+ $('statsDialog').querySelector('.sheet-overlay').scrollTop=0;
+}
+function showStatsOverview(){
+ $('statsTitle').textContent='Справка за деня';
+ $('statsOverview').hidden=false;
+ $('expenseListView').hidden=true;
+ $('statsDialog').querySelector('.sheet-overlay').scrollTop=0;
+}
+function openStats(mode='overview'){
+ const values=[...$('metrics').querySelectorAll('.metric')].map(el=>[el.querySelector('.label').textContent,el.querySelector('.number').textContent]);
+ const detailValues=[...$('details').querySelectorAll('.detail')].map(el=>[el.childNodes[0].textContent.trim(),el.querySelector('strong').textContent]);
+ $('statsDate').textContent=$('activeDate').textContent;
+ const box=$('statsDetails');box.replaceChildren();
+ for(const [label,n] of [...values,...detailValues]){
+  const isExpense=label==='РАЗХОД';
+  const item=mk(isExpense?'button':'div','');
+  if(isExpense){item.type='button';item.title='Виж военнослужещите в разход';item.setAttribute('aria-label',`Разход: ${n}. Покажи списъка.`);item.onclick=showExpenseView}
+  item.append(mk('span','',label),mk('strong','',n));box.append(item);
+ }
+ if(mode==='expense')showExpenseView();else showStatsOverview();
+ $('statsDialog').showModal();
+}
+$('navStats').onclick=()=>openStats();
+$('backToStats').onclick=showStatsOverview;
 $('closeStats').onclick=()=>$('statsDialog').close();$('doneStats').onclick=()=>$('statsDialog').close();
 $('export').addEventListener('click',()=>{if($('menuDialog').open)$('menuDialog').close()});
 $('import').addEventListener('click',()=>{if($('menuDialog').open)$('menuDialog').close()});
