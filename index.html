@@ -147,11 +147,17 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
 /* Team access gate and notification history */
 body:not(.cloud-ready)>header,body:not(.cloud-ready)>main,body:not(.cloud-ready)>.bottom-nav{display:none!important}
 body.cloud-ready #accessGate{opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.025);transition:opacity .48s ease,transform .48s ease,visibility 0s linear .48s}
-.access-gate{position:fixed;inset:0;z-index:25;min-height:100dvh;display:flex;justify-content:center;align-items:center;padding:24px;overflow-y:auto;background:linear-gradient(155deg,#133b2b,#295541);opacity:1;visibility:visible;transform:scale(1);transition:opacity .48s ease,transform .48s ease}
-.gate-card{max-width:420px;width:100%;padding:28px 24px;background:#fafcf8;border-radius:22px;border:1px solid #d2dfd2;box-shadow:0 15px 38px #0b281d55;text-align:center}
+.access-gate{position:fixed;inset:0;z-index:25;min-height:100dvh;display:flex;justify-content:center;align-items:center;padding:24px;overflow-y:auto;
+background-color:#142c24;
+background-image:radial-gradient(ellipse 28% 21% at 10% 11%,#435443 0%,#435443 55%,transparent 80%),radial-gradient(ellipse 32% 28% at 72% 16%,#263c2e 0%,#263c2e 50%,transparent 82%),radial-gradient(ellipse 29% 25% at 14% 65%,#455340 0%,#455340 52%,transparent 80%),radial-gradient(ellipse 36% 27% at 88% 68%,#364a36 0%,#364a36 58%,transparent 82%),radial-gradient(ellipse 27% 20% at 52% 95%,#4d5540 0%,#4d5540 47%,transparent 80%),linear-gradient(135deg,#132d25 0%,#233d30 45%,#152d25 100%);
+opacity:1;visibility:visible;transform:scale(1);transition:opacity .48s ease,transform .48s ease}
+.access-gate:before{content:'';pointer-events:none;position:absolute;inset:0;opacity:.3;background:repeating-linear-gradient(135deg,transparent 0 22px,#091b14 22px 23px,transparent 23px 57px);mask-image:linear-gradient(to bottom,black,transparent 94%)}
+.access-gate:after{content:'';pointer-events:none;position:absolute;inset:0;background:radial-gradient(ellipse 70% 52% at 50% 50%,transparent 0%,#07180e40 85%)}
+.access-gate .gate-card{position:relative;z-index:1}
+.gate-card{max-width:420px;width:100%;padding:28px 24px;background:#fafcf8;border-radius:22px;border:1px solid #b0bea9;box-shadow:0 16px 48px #07181188,0 0 0 5px #ffffff0c;text-align:center}
 .gate-card h2{font-size:23px;line-height:1.23;margin:0 0 13px;color:#1b4534}
 .gate-card p{font-size:14px;color:#526b5a;line-height:1.52}
-.gate-symbol{display:inline-grid;place-items:center;width:66px;height:66px;border-radius:19px;background:#174b32;color:#e6e6c4;font-size:38px;margin-bottom:16px}
+.gate-symbol{display:inline-grid;place-items:center;width:66px;height:66px;border-radius:19px;background:#174b32;color:#ecdfb0;font-size:38px;margin-bottom:16px;border:1px solid #bcae705e;box-shadow:0 4px 12px #113d2a33}
 .gate-card .gate-state{background:#ecf2ea;border-radius:12px;padding:10px;color:#285e40;font-weight:700}
 .gate-card .gate-note{font-size:11px}
 .team-role{font-size:11px;color:#dbe9dc;font-weight:700;white-space:nowrap}
@@ -231,6 +237,9 @@ body.cloud-viewer .viewer-banner{display:flex}
 @media(max-width:365px){.expense-row{padding:9px}.expense-reason{max-width:112px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.metric.expense-clickable{transition:none}}
 
+/* Gentle camouflage, with strong contrast around the two clear entrance actions. */
+.gate-card h2{font-weight:850;letter-spacing:-.025em}
+.gate-card:after{content:'';display:block;width:74px;height:3px;background:#a69b62;border-radius:6px;margin:19px auto 0;opacity:.55}
 /* Clean entrance: two clearly separated actions, no secondary explanations. */
 .gate-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
 .gate-actions button{min-height:51px;border-radius:13px;padding:12px 9px;font-size:15px;font-weight:800;letter-spacing:.01em;transition:transform .15s ease,background .2s ease,box-shadow .2s ease}
@@ -239,10 +248,6 @@ body.cloud-viewer .viewer-banner{display:flex}
 .gate-actions button:active{transform:scale(.97)}
 .gate-actions button:disabled{opacity:.5;cursor:progress}
 .gate-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-.cloud-access-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:4px;margin:16px 0 13px;background:#eaf1eb;border:1px solid #d5e3d9;border-radius:13px}
-.cloud-access-tabs button{border:0;border-radius:10px;min-height:43px;background:transparent;color:#416554;font-size:14px;font-weight:800;transition:background-color .2s ease,color .2s ease,box-shadow .2s ease}
-.cloud-access-tabs button.selected{background:#1c5741;color:white;box-shadow:0 2px 7px #1c574122}
-.cloud-access-tabs button:active{transform:scale(.985)}
 @media(prefers-reduced-motion:reduce){.gate-actions button,.cloud-access-tabs button{transition:none}}
 </style>
 </head>
@@ -300,40 +305,23 @@ body.cloud-viewer .viewer-banner{display:flex}
 </div></dialog>
 <dialog id="cloudDialog"><div class="sheet-overlay cloud-sheet"><div class="sheet-handle"></div>
   <div class="modal-top"><div><h2 class="modal-title">☁ Общ график</h2><div class="modal-sub" id="cloudState">Защитена синхронизация</div></div><button class="closemodal" id="closeCloud" type="button" aria-label="Затвори">×</button></div>
-  <div class="cloud-access-tabs" id="cloudAccessTabs" role="group" aria-label="Начин на достъп">
-    <button type="button" id="cloudTabEnter" class="selected" aria-pressed="true">Влез</button>
-    <button type="button" id="cloudTabView" aria-pressed="false">Преглед</button>
-  </div>
   <section class="cloud-panel" id="configSection"><label for="firebaseConfigField">Firebase проект (еднократно)</label>
    <textarea class="cloud-config" id="firebaseConfigField" rows="5" placeholder='Постави firebaseConfig от Firebase Console: {apiKey:"...",authDomain:"...",projectId:"...",appId:"...",messagingSenderId:"..."}'></textarea>
    <label for="cloudVapid">VAPID ключ за push известия (може да се добави по-късно)</label><input id="cloudVapid" placeholder="Web Push certificate key" autocomplete="off">
    <button class="widebtn" type="button" id="saveFirebaseConfig">Свържи проекта</button>
-   <p class="cloud-hint">Администраторът трябва да включи Firebase Authentication, Firestore и правилата от приложения файл. Конфигурацията не е парола. Не добавяй лични имена тук.</p></section>
+   <p class="cloud-hint">Редакцията е достъпна само за двата одобрени профила.</p></section>
   <section class="cloud-panel" id="loginSection" hidden><label>Влез с имейл</label>
    <input id="cloudEmail" type="email" inputmode="email" autocomplete="username" placeholder="Имейл">
    <input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Парола">
    <button type="button" id="cloudLogin" class="widebtn">Влез</button>
   </section>
-   <section class="cloud-panel" id="inviteSection" hidden>
-    <label for="viewerInvite">Еднократен код за разглеждане</label>
-    <input id="viewerInvite" type="text" maxlength="32" inputmode="text" autocapitalize="characters" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX" style="font-variant-numeric:tabular-nums;letter-spacing:1px;font-weight:700;text-transform:uppercase">
-    <button type="button" id="redeemInvite" class="widebtn">Активирай достъп за това устройство</button>
-    <p class="cloud-hint">Прегледът е само с индивидуален код. Издаването на кодове все още не е активирано; дотогава влизане за преглед не е възможно.</p>
-   </section>
-   <section class="cloud-panel" id="editorTools" hidden style="display:none">
-    <label>Покани за личния състав</label>
-    <button type="button" id="createViewCodes" class="widebtn secondary">Създай 5 еднократни кода</button>
-    <textarea id="generatedCodes" class="cloud-config" rows="6" readonly hidden aria-label="Издадени еднократни кодове"></textarea>
-    <button type="button" id="copyViewCodes" class="widebtn secondary" hidden>Копирай кодовете</button>
-    <p class="cloud-hint">Изпращай по един код на човек. Тези кодове се показват само веднъж. Можеш да отнемеш достъпа от Firebase → Firestore → access.</p>
-   </section>
    <section class="cloud-panel" id="linkedSection" hidden><div class="cloud-user" id="cloudUser"></div>
-    <div class="cloud-two"><button class="widebtn secondary" type="button" id="cloudShareLink">Копирай линк към приложението</button><button class="widebtn secondary" type="button" id="cloudLogout">Изход</button></div>
+    <div class="cloud-two"><button class="widebtn secondary" type="button" id="cloudShareLink">Копирай линк към приложението</button><button class="widebtn secondary" type="button" id="cloudLogout">Изход</button></div><button class="widebtn" type="button" id="switchToEditor" hidden>Влез като редактор</button>
     <button class="widebtn secondary" type="button" id="enablePush">🔔 Разреши известия на това устройство</button></section>
   <section class="cloud-panel" id="cloudDecision" hidden><h3>Имаш локално запазен график</h3><p>Избери дали да запазиш общия график от облака, или ти като редактор да качиш стария график от това устройство. Препоръчително е първо да направиш резервно копие.</p>
   <div class="cloud-two"><button class="widebtn" type="button" id="cloudUseRemote">Зареди общия</button><button class="widebtn secondary" type="button" id="cloudUseLocal">Качи локалния</button></div></section>
   <div class="cloud-error" id="cloudError" role="alert" hidden></div>
-  <div class="cloud-foot"><span class="dot" id="cloudDot"></span><span id="cloudFootText">Достъпът се управлява от сървъра. Кодът е еднократен.</span></div>
+  <div class="cloud-foot"><span class="dot" id="cloudDot"></span><span id="cloudFootText">Преглед без регистрация · Редакция само с одобрен профил.</span></div>
   <button class="widebtn secondary" type="button" id="changeFirebase">Смени Firebase проекта на това устройство</button>
   <button class="widebtn secondary" id="doneCloud" type="button">Затвори</button>
 </div></dialog>
@@ -387,7 +375,7 @@ const BUILT_IN_FIREBASE_CONFIG={
 const TEAM_PENDING_PREFIX='grafik-team-pending-v1:';
 const TEAM_CONNECTED_PREFIX='grafik-team-connected-v1:';
 const FB_SDK='13.3.0';
-const cloud={mode:'off',config:null,sdk:null,app:null,auth:null,db:null,functions:null,uid:null,email:'',role:null,initSeq:0,unsub:[],remotePeople:[],remoteStatuses:{},ready:false,flushing:false,initialized:false,notificationsReady:false,noticeCount:0};
+const cloud={mode:'off',config:null,sdk:null,app:null,auth:null,db:null,uid:null,email:'',role:null,initSeq:0,unsub:[],remotePeople:[],remoteStatuses:{},ready:false,flushing:false,initialized:false,notificationsReady:false,noticeCount:0};
 const canEdit=()=>cloud.mode==='active'&&cloud.role==='editor';
 function cloudMessage(message,kind='normal'){
   const foot=$('cloudFootText');if(foot)foot.textContent=message;
@@ -428,37 +416,24 @@ function closeCloudAfterLogin(){
   dialog.classList.add('closing-success');
   setTimeout(()=>{if(dialog.open)dialog.close();dialog.classList.remove('closing-success')},270);
 }
-let cloudEntryTab='editor';
-function setCloudEntryTab(tab){
-  cloudEntryTab=tab==='viewer'?'viewer':'editor';
-  hideCloudError();
-  showCloudUI();
-}
+let editorLoginRequested=false;
 function showCloudUI(){
   const config=!!cloud.config,logged=!!cloud.uid;
   const checking=cloud.mode==='connecting';
   $('accessGate').classList.toggle('checking',checking);
   $('gateSetup').disabled=checking;
   $('gateView').disabled=checking;
-  const showAuthChoices=config&&cloud.role!=='editor'&&cloud.role!=='viewer'&&!checking;
-  $('cloudAccessTabs').hidden=!showAuthChoices;
-  $('cloudTabEnter').classList.toggle('selected',cloudEntryTab==='editor');
-  $('cloudTabView').classList.toggle('selected',cloudEntryTab==='viewer');
-  $('cloudTabEnter').setAttribute('aria-pressed',String(cloudEntryTab==='editor'));
-  $('cloudTabView').setAttribute('aria-pressed',String(cloudEntryTab==='viewer'));
   $('configSection').hidden=config;
-  // Firebase access roles continue to be validated server-side.
-  $('loginSection').hidden=!showAuthChoices||cloudEntryTab!=='editor';
-  $('inviteSection').hidden=!showAuthChoices||cloudEntryTab!=='viewer';
-  $('editorTools').hidden=cloud.role!=='editor';
+  $('loginSection').hidden=!config||!editorLoginRequested||checking;
   $('linkedSection').hidden=!logged;
   $('cloudDecision').hidden=cloud.mode!=='choose';
-  $('cloudUser').textContent=logged?`${cloud.email||'Устройство без имейл'} · ${cloud.role==='editor'?'Редактор':cloud.role==='viewer'?'САМО ПРЕГЛЕД':'Кодът не е активиран'}`:'';
+  $('cloudUser').textContent=logged?(cloud.role==='viewer'?'САМО ПРЕГЛЕД · Без регистрация':`${cloud.email||'Профил'} · ${cloud.role==='editor'?'Редактор':'Няма права'}`):'';
+  $('switchToEditor').hidden=cloud.role!=='viewer';
   $('cloudUseLocal').hidden=cloud.role!=='editor';
-  $('enablePush').hidden=!cloud.ready;
+  $('enablePush').hidden=!cloud.ready||cloud.role!=='editor';
   $('cloudVapid').value=cloud.config?.vapidKey||$('cloudVapid').value;
 }
-function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Само одобрени потребители';}
+function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';}
 function unlockSchedule(){
   cloud.ready=true;document.body.classList.add('cloud-ready');
   document.body.classList.toggle('cloud-editor',cloud.role==='editor');
@@ -471,8 +446,8 @@ function unlockSchedule(){
 async function loadFirebaseSDK(){
   if(cloud.sdk)return cloud.sdk;
   const base=`https://www.gstatic.com/firebasejs/${FB_SDK}/`;
-  const [app,auth,firestore,functions]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js'),import(base+'firebase-functions.js')]);
-  cloud.sdk={...app,...auth,...firestore,...functions};return cloud.sdk;
+  const [app,auth,firestore]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+  cloud.sdk={...app,...auth,...firestore};return cloud.sdk;
 }
 function stopCloudListeners(){for(const f of cloud.unsub){try{f()}catch(e){console.warn(e)}}cloud.unsub=[];cloud.notificationsReady=false}
 const teamPath='platoons/osiguryavane';
@@ -504,11 +479,18 @@ function adoptRemote(){
 async function initializeTeam(){
   const seq=++cloud.initSeq;
   stopCloudListeners();lockSchedule();hideCloudError();cloud.mode='connecting';cloudMessage('Проверка на достъпа…');
-  const sdk=cloud.sdk,grant=await sdk.getDoc(accessRef(cloud.uid));
+  const sdk=cloud.sdk;
+  let role=null;
+  if(cloud.auth.currentUser?.isAnonymous){
+    role='viewer';
+  } else {
+    const grant=await sdk.getDoc(accessRef(cloud.uid));
+    if(seq!==cloud.initSeq)return;
+    role=grant.exists()?grant.data().role:null;
+  }
   if(seq!==cloud.initSeq)return;
-  const role=grant.exists()?grant.data().role:null;
   if(role!=='editor'&&role!=='viewer'){
-    cloud.role=null;cloud.mode='denied';setLoginBusy(false);cloudMessage('Няма активен достъп. Избери Влез или Преглед.');showCloudUI();return;
+    cloud.role=null;cloud.mode='denied';setLoginBusy(false);cloudMessage('Няма права за редактиране. Избери Преглед или използвай одобрен профил.');showCloudUI();return;
   }
   cloud.role=role;
   const [rosterSnap,cellSnaps]=await Promise.all([sdk.getDoc(rosterRef()),sdk.getDocs(cellsRef())]);
@@ -614,7 +596,7 @@ async function connectFirebase(c){
   cloud.config=c;cloud.mode='connecting';showCloudUI();cloudMessage('Свързване към облака…');
   const sdk=await loadFirebaseSDK();
   cloud.app=sdk.getApps().find(a=>a.name==='grafik-team')||sdk.initializeApp(currentFirebaseConfig(),'grafik-team');
-  cloud.db=sdk.getFirestore(cloud.app);cloud.auth=sdk.getAuth(cloud.app);cloud.functions=sdk.getFunctions(cloud.app,'europe-west1');
+  cloud.db=sdk.getFirestore(cloud.app);cloud.auth=sdk.getAuth(cloud.app);
   // Запомни активния профил на това устройство, включително след затваряне на браузъра.
   // Настройката се прилага и към вече съществуваща сесия от по-стара версия.
   await sdk.setPersistence(cloud.auth,sdk.browserLocalPersistence);
@@ -663,10 +645,24 @@ $('notifications').onclick=()=>{
 };
 $('closeNotices').onclick=()=>$('noticeDialog').close();
 $('noticeDialog').addEventListener('click',e=>{if(e.target===$('noticeDialog'))$('noticeDialog').close()});
-$('gateSetup').onclick=()=>{setCloudEntryTab('editor');$('cloudDialog').showModal()};
-$('gateView').onclick=()=>{setCloudEntryTab('viewer');$('cloudDialog').showModal()};
-$('cloudTabEnter').onclick=()=>setCloudEntryTab('editor');
-$('cloudTabView').onclick=()=>setCloudEntryTab('viewer');
+$('gateSetup').onclick=()=>{editorLoginRequested=true;hideCloudError();showCloudUI();$('cloudDialog').showModal()};
+$('gateView').onclick=async()=>{
+  editorLoginRequested=false;hideCloudError();
+  try{
+    if(!cloud.auth)throw Error('Няма връзка с Firebase. Провери интернет връзката.');
+    if(cloud.auth.currentUser?.isAnonymous){await initializeTeam();return;}
+    // A signed-in email account without editor rights can still switch to free viewing.
+    if(cloud.auth.currentUser)await cloud.sdk.signOut(cloud.auth);
+    cloud.mode='connecting';showCloudUI();cloudMessage('Зареждане за преглед…');
+    // Anonymous Firebase is only a technical session; no code, email or password is required.
+    await cloud.sdk.signInAnonymously(cloud.auth);
+  }catch(e){cloud.mode='error';cloudFail(e);if(!$('cloudDialog').open)$('cloudDialog').showModal();}
+};
+$('switchToEditor').onclick=async()=>{
+  hideCloudError();editorLoginRequested=true;
+  try{if(cloud.auth.currentUser?.isAnonymous)await cloud.sdk.signOut(cloud.auth);showCloudUI();if(!$('cloudDialog').open)$('cloudDialog').showModal();}
+  catch(e){cloudFail(e)}
+};
 $('saveFirebaseConfig').onclick=async()=>{
   hideCloudError();try{
     const c=parseFirebaseConfig($('firebaseConfigField').value);localStorage.setItem(FIREBASE_CFG_KEY,JSON.stringify(c));await connectFirebase(c);
@@ -679,42 +675,12 @@ $('cloudLogin').onclick=async()=>{hideCloudError();setLoginBusy(true);try{
   await cloud.sdk.signInWithEmailAndPassword(cloud.auth,$('cloudEmail').value.trim(),$('cloudPassword').value);
   $('cloudPassword').value='';
 }catch(e){cloudFail(e)}};
-$('cloudLogout').onclick=async()=>{try{if(!confirm('Да излезеш от това устройство? За достъп само с код ще трябва нов код.'))return;await cloud.sdk.signOut(cloud.auth)}catch(e){cloudFail(e)}};
-$('redeemInvite').onclick=async()=>{
-  hideCloudError();const b=$('redeemInvite');b.disabled=true;
-  try{
-    if(!cloud.auth||!cloud.functions)throw Error('Първо свържи Firebase проекта.');
-    const code=$('viewerInvite').value.trim().toUpperCase();
-    if(!code)throw Error('Въведи кода, който си получил.');
-    if(!cloud.auth.currentUser)await cloud.sdk.signInAnonymously(cloud.auth);
-    if(!cloud.auth.currentUser.isAnonymous)throw Error('Този код е за потребител без командирски профил.');
-    const redeem=cloud.sdk.httpsCallable(cloud.functions,'redeemViewerCode');
-    await redeem({code});$('viewerInvite').value='';
-    // New role has been written by the server, now update the client's access and listeners.
-    cloud.uid=cloud.auth.currentUser.uid;
-    await initializeTeam();notify('Достъпът е активиран. Оттук нататък само разглеждаш.');
-  }catch(e){cloudFail(e)}finally{b.disabled=false}
-};
-$('createViewCodes').onclick=async()=>{
-  hideCloudError();const b=$('createViewCodes');b.disabled=true;
-  try{
-    if(cloud.role!=='editor'||!cloud.functions)throw Error('Само редактор може да издава кодове.');
-    const create=cloud.sdk.httpsCallable(cloud.functions,'createViewerCodes');
-    const response=await create({count:5});const codes=response.data?.codes||[];
-    if(!codes.length)throw Error('Няма издадени кодове.');
-    $('generatedCodes').value=codes.join('\n');$('generatedCodes').hidden=false;
-    $('copyViewCodes').hidden=false;notify('Издадени са '+codes.length+' еднократни кода');
-  }catch(e){cloudFail(e)}finally{b.disabled=false}
-};
-$('copyViewCodes').onclick=async()=>{
-  try{await navigator.clipboard.writeText($('generatedCodes').value);notify('Кодовете са копирани')}
-  catch(e){$('generatedCodes').focus();$('generatedCodes').select();notify('Маркирай и копирай кодовете')}
-};
+$('cloudLogout').onclick=async()=>{try{if(!confirm('Да излезеш от това устройство?'))return;await cloud.sdk.signOut(cloud.auth);if($('cloudDialog').open)$('cloudDialog').close()}catch(e){cloudFail(e)}};
 $('cloudUseRemote').onclick=onChooseRemote;
 $('cloudUseLocal').onclick=onChooseLocal;
 $('cloudShareLink').onclick=async()=>{
-  const link=location.origin+location.pathname+'?teamfb='+encodeConfig(cloud.config);
-  try{await navigator.clipboard.writeText(link);notify('Линкът е копиран')}catch(e){prompt('Копирай линка за одобрен потребител:',link)}
+  const link=location.origin+location.pathname;
+  try{await navigator.clipboard.writeText(link);notify('Линкът е копиран')}catch(e){prompt('Копирай линка към графика:',link)}
 };
 $('changeFirebase').onclick=()=>{
   if(!confirm('Да премахнем настройката за Firebase на това устройство? Данните в облака няма да бъдат изтрити.'))return;
