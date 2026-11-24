@@ -299,6 +299,31 @@ body.cloud-viewer .viewer-banner{display:flex}
 @media(max-width:355px){.edit-scope button{font-size:11px}.range-fields input{font-size:11px}}
 /* Keep transient save tips ABOVE the confirmation bar, not on top of its button. */
 body.has-batch-confirm #toast{bottom:var(--toast-above-batch,220px);max-width:calc(100vw - 30px);white-space:normal;line-height:1.4;text-align:center}
+
+/* Excel-like long-press multiselect; keep the schedule and editor session intact. */
+.statuscell{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;position:relative}
+body.multi-select-mode .statuscell{touch-action:none;cursor:crosshair}
+body.multi-select-mode .statuscell.multi-marked{background:#d6f4df!important;color:#0c3d2a!important;box-shadow:inset 0 0 0 3px #118052,inset 0 0 0 4px #edfff2;outline:1px solid #145c3b;outline-offset:-1px;z-index:2;border-radius:2px}
+body.multi-select-mode .statuscell.multi-marked::after{content:'✓';position:absolute;top:2px;right:2px;font-size:10px;line-height:1;color:#07592f;font-weight:950;text-shadow:0 1px #fff}
+body.multi-select-mode .statuscell.multi-marked:active{background:#b7d8be!important}
+body.multi-select-mode .statuscell:not(.multi-marked){opacity:.79}
+body.multi-select-mode .batch-confirm-bar{display:none!important}
+.multi-selection-bar{position:fixed;z-index:16;bottom:calc(68px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(calc(100% - 20px),670px);background:#f9fbf7;border:1px solid #8eb69c;box-shadow:0 7px 28px #14362548;border-radius:16px;padding:11px 12px;color:#184331}
+.multi-selection-bar[hidden]{display:none!important}
+.multi-selection-info{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.multi-selection-info strong{font-size:14px;font-weight:850}
+.multi-selection-info small{font-size:10px;line-height:1.4;color:#5a7162}
+.multi-selection-actions{display:flex;gap:8px;margin-top:9px}
+.multi-selection-actions button{min-height:44px;border-radius:11px;font-size:12px;font-weight:800;padding:8px 7px}
+#multiCancel{background:#fff;color:#244d3b;border:1px solid #91b4a0;flex:1;white-space:normal;line-height:1.15}
+#multiApply{background:#15533a;border:1px solid #15533a;color:white;flex:1;white-space:normal}
+#multiApply:disabled{opacity:.55}
+body.multi-select-mode #toast{bottom:calc(202px + env(safe-area-inset-bottom));max-width:calc(100vw - 28px);text-align:center;white-space:normal}
+#scopeChoices[hidden]{display:none!important}
+#statusDialog .multi-target-summary{background:#e0eee2;border-color:#a7d0ae;color:#194d33;font-weight:760}
+@media(min-width:620px){.multi-selection-bar{bottom:calc(72px + env(safe-area-inset-bottom))}}
+@media(max-width:355px){.multi-selection-bar{padding:9px}.multi-selection-info strong{font-size:12px}.multi-selection-actions button{font-size:11px}}
+@media(prefers-reduced-motion:no-preference){.multi-selection-bar{animation:multiBarReveal .19s ease-out both}@keyframes multiBarReveal{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}}
 </style>
 </head>
 <body class="secure-locked">
@@ -338,6 +363,10 @@ body.has-batch-confirm #toast{bottom:var(--toast-above-batch,220px);max-width:ca
   <div class="legend"><span>Празно · На лице</span><span>Наряд · код</span><span>О · Отпуска</span><span>Б · Болничен</span><span>К · Командировка</span><span>По · Почивка</span></div>
 </section>
 </main>
+<div class="multi-selection-bar" id="multiSelectionBar" hidden role="region" aria-label="Маркирани клетки">
+ <div class="multi-selection-info"><strong id="multiSelectionCount">Избрана 1 клетка</strong><small>Плъзни или докосни още</small></div>
+ <div class="multi-selection-actions"><button type="button" id="multiCancel" aria-label="Отмени маркирането, без да променяш графика">✕ Отмени маркирането</button><button type="button" id="multiApply">Задай статус</button></div>
+</div>
 <div class="batch-confirm-bar" id="batchConfirmBar" hidden role="region" aria-label="Приключване на промените">
   <div class="batch-confirm-copy"><strong id="batchConfirmCount">Има промени за потвърждаване</strong><small id="batchConfirmStatus">Записват се автоматично в общия график.</small></div>
   <button id="confirmBatchButton" type="button">Потвърди промените</button>
@@ -348,7 +377,7 @@ body.has-batch-confirm #toast{bottom:var(--toast-above-batch,220px);max-width:ca
 <button type="button" id="navStats"><span class="nav-icon">▥</span> Справка</button>
 </nav>
 <dialog id="statusDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title" id="personTitle"></h2><div class="modal-sub" id="statusDate"></div></div><button type="button" class="closemodal" id="closeStatus" aria-label="Затвори">×</button></div>
-<div class="edit-scope" role="group" aria-label="За кои дни да се приложи статусът">
+<div class="edit-scope" id="scopeChoices" role="group" aria-label="За кои дни да се приложи статусът">
   <button type="button" id="scopeDay" class="active" aria-pressed="true">Един ден</button>
   <button type="button" id="scopeWeek" aria-pressed="false">Цяла седмица</button>
   <button type="button" id="scopeRange" aria-pressed="false">Период</button>
@@ -503,7 +532,7 @@ function showCloudUI(){
   $('enablePush').hidden=!cloud.ready||!canEdit();
   $('cloudVapid').value=cloud.config?.vapidKey||$('cloudVapid').value;
 }
-function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';renderConfirmBar();}
+function lockSchedule(){if(multiSelectMode)clearMultiSelection();document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';renderConfirmBar();}
 function unlockSchedule(){
   // Do not skip the welcome screen when the browser restores a previous Firebase login.
   // Only an explicit tap on Влез or Преглед reveals the shared schedule.
@@ -1010,11 +1039,11 @@ function notify(msg){positionToastAboveBatch();$('toast').textContent=msg;$('toa
 function defaultStatus(d){return 'Р'}
 function statusOf(p,d){const stored=state.statuses[`${p.id}|${dateStr(d)}`];return typeof stored==='string'&&stored?stored:defaultStatus(d)}
 function mk(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=txt;return el}
-function selectDate(d){selected=makeDate(d.getFullYear(),d.getMonth(),d.getDate());start=monday(selected);render()}
+function selectDate(d){if(multiSelectMode)clearMultiSelection();selected=makeDate(d.getFullYear(),d.getMonth(),d.getDate());start=monday(selected);render()}
 function changeMonth(delta){selectDate(makeDate(selected.getFullYear(),selected.getMonth()+delta,Math.min(selected.getDate(),new Date(selected.getFullYear(),selected.getMonth()+delta+1,0).getDate())))}
 function changeWeek(delta){const newStart=addDays(start,7*delta);selectDate(newStart)}
 function statusClass(status){return isDuty(status)?'duty':({Р:'presence',Б:'sick',О:'leave',КМ:'trip',К:'other',П:'break',Д:'other'})[status]||''}
-function switchView(mode){
+function switchView(mode){if(multiSelectMode)clearMultiSelection();
  viewMode=mode==='month'?'month':'week';
  try{localStorage.setItem(VIEW_MODE_KEY,viewMode)}catch{}
  render();
@@ -1032,6 +1061,146 @@ function scrollMonthToSelected(viewport){
  const day=selected.getDate();
  viewport.scrollLeft=Math.max(0,Math.round((day-Math.max(2,Math.floor(visible/2)))*col));
 }
+// Long press a cell for 480ms to enter selection, then tap or drag to add more.
+// A standard short tap retains the original single-cell editing dialog.
+let multiSelectMode=false;
+let selectedCells=new Map();
+let multiPointer=null;
+let ignoreClickKey='',ignoreClickUntil=0;
+const LONG_PRESS_MS=480;
+const MAX_MULTI_CELLS=200;
+function selectedCellKey(person,day){return person.id+'|'+dateStr(day)}
+function updateMultiHighlights(){
+  document.querySelectorAll('#rosterRows .statuscell[data-cell-key]').forEach(button=>{
+    const chosen=selectedCells.has(button.dataset.cellKey);
+    button.classList.toggle('multi-marked',chosen);
+    button.setAttribute('aria-pressed',String(chosen));
+  });
+}
+function updateMultiToolbar(){
+  const count=selectedCells.size;
+  const bar=$('multiSelectionBar');
+  bar.hidden=!multiSelectMode;
+  document.body.classList.toggle('multi-select-mode',multiSelectMode);
+  if(!multiSelectMode){renderConfirmBar();return}
+  $('multiSelectionCount').textContent=`Маркирани: ${count} ${count===1?'клетка':'клетки'}`;
+  $('multiApply').disabled=count===0;
+  $('rosterHint').textContent='Докосни или плъзни за още клетки';
+  updateMultiHighlights();
+}
+function clearMultiSelection(){
+  if(multiPointer?.timer)clearTimeout(multiPointer.timer);
+  multiPointer=null;selectedCells.clear();multiSelectMode=false;
+  document.body.classList.remove('multi-select-mode');
+  $('multiSelectionBar').hidden=true;
+  updateMultiHighlights();renderConfirmBar();
+  if($('rosterHint'))$('rosterHint').textContent=viewMode==='month'?'Мести датите · Задръж клетка за маркиране':'Задръж за маркиране';
+}
+function beginMultiSelection(key){
+  if(!canEdit())return;
+  multiSelectMode=true;
+  selectedCells.set(key,true);
+  updateMultiToolbar();
+  if(navigator.vibrate)navigator.vibrate(18);
+}
+function toggleMultiCell(key){
+  if(selectedCells.has(key))selectedCells.delete(key);else if(selectedCells.size<MAX_MULTI_CELLS)selectedCells.set(key,true);
+  else notify('Максимум '+MAX_MULTI_CELLS+' клетки наведнъж.');
+  updateMultiToolbar();
+}
+function multiRectKeys(fromKey,toKey){
+  const rows=state.people.map(p=>p.id),dates=visibleDates().map(dateStr);
+  const [personFrom,dateFrom]=fromKey.split('|'),[personTo,dateTo]=toKey.split('|');
+  const r1=rows.indexOf(personFrom),r2=rows.indexOf(personTo),c1=dates.indexOf(dateFrom),c2=dates.indexOf(dateTo);
+  if([r1,r2,c1,c2].some(v=>v<0))return [];
+  const result=[];
+  for(let r=Math.min(r1,r2);r<=Math.max(r1,r2);r++)
+    for(let c=Math.min(c1,c2);c<=Math.max(c1,c2);c++)result.push(rows[r]+'|'+dates[c]);
+  return result;
+}
+function addDragRect(startKey,hoverKey,base){
+  const next=new Map(base),cells=multiRectKeys(startKey,hoverKey);
+  if(cells.length>MAX_MULTI_CELLS){notify('Избери до '+MAX_MULTI_CELLS+' клетки наведнъж.');return}
+  for(const key of cells)next.set(key,true);
+  selectedCells=next;updateMultiToolbar();
+}
+function pointerCellAt(x,y){
+  const hit=document.elementFromPoint(x,y)?.closest?.('.statuscell[data-cell-key]');
+  return hit?.dataset.cellKey||null;
+}
+function onMultiPointerDown(e,key){
+  if(!canEdit()||multiPointer||e.button!==0||e.isPrimary===false)return;
+  const active=multiSelectMode;
+  multiPointer={id:e.pointerId,anchor:key,x:e.clientX,y:e.clientY,active:false,startedInMode:active,dragged:false,hover:key,base:new Map(selectedCells),timer:null};
+  if(active){
+    // Selection is already active; scrolling remains possible via name or day headers.
+    multiPointer.active=true;
+  }else{
+    const id=e.pointerId;
+    multiPointer.timer=setTimeout(()=>{
+      if(multiPointer?.id!==id||multiPointer.dragged)return;
+      multiPointer.active=true;
+      multiPointer.base=new Map();
+      beginMultiSelection(key);
+    },LONG_PRESS_MS);
+  }
+}
+function onMultiPointerMove(e){
+  const gesture=multiPointer;
+  if(!gesture||e.pointerId!==gesture.id)return;
+  if(!gesture.active){
+    if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>11){
+      gesture.dragged=true;clearTimeout(gesture.timer);gesture.timer=null;
+    }
+    return;
+  }
+  const hover=pointerCellAt(e.clientX,e.clientY);
+  if(hover&&hover!==gesture.hover){
+    gesture.dragged=true;gesture.hover=hover;addDragRect(gesture.anchor,hover,gesture.base);
+  }
+  if(e.cancelable)e.preventDefault();
+}
+function onMultiPointerEnd(e){
+  const gesture=multiPointer;
+  if(!gesture||e.pointerId!==gesture.id)return;
+  clearTimeout(gesture.timer);
+  multiPointer=null;
+  if(!gesture.active)return;
+  ignoreClickKey=gesture.anchor;ignoreClickUntil=Date.now()+900;
+  if(gesture.startedInMode&&!gesture.dragged)toggleMultiCell(gesture.anchor);
+  else updateMultiToolbar();
+}
+function onMultiPointerCancel(e){
+  if(!multiPointer||e.pointerId!==multiPointer.id)return;
+  clearTimeout(multiPointer.timer);multiPointer=null;
+}
+// Attach once to the fixed scroll surface: cell nodes are rebuilt by render().
+$('rosterScroll').addEventListener('pointerdown',e=>{
+  const btn=e.target.closest?.('.statuscell[data-cell-key]');
+  if(btn)onMultiPointerDown(e,btn.dataset.cellKey);
+});
+document.addEventListener('pointermove',onMultiPointerMove,{passive:false});
+// On Safari, cancel the native scroll only AFTER the long press has begun.
+document.addEventListener('touchmove',e=>{if(multiPointer?.active&&e.cancelable)e.preventDefault()},{passive:false});
+document.addEventListener('pointerup',onMultiPointerEnd);
+document.addEventListener('pointercancel',onMultiPointerCancel);
+$('rosterScroll').addEventListener('contextmenu',e=>{if(e.target.closest?.('.statuscell'))e.preventDefault()});
+$('multiCancel').onclick=clearMultiSelection;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&multiSelectMode&&!document.querySelector('dialog[open]'))clearMultiSelection()});
+$('multiApply').onclick=()=>{
+  if(!canEdit()||!selectedCells.size)return;
+  editScope='multi';pickedPerson=state.people.find(p=>p.id===([...selectedCells.keys()][0]||'').split('|')[0])||state.people[0];
+  pickedDate=parseLocalDate([...selectedCells.keys()][0]?.split('|')[1])||selected;
+  choiceTab='base';
+  const people=new Set([...selectedCells.keys()].map(key=>key.split('|')[0])).size;
+  $('personTitle').textContent='Групова промяна';
+  $('statusDate').textContent=`${selectedCells.size} клетки · ${people} ${people===1?'човек':'души'}`;
+  $('scopeChoices').hidden=true;$('rangeFields').hidden=true;
+  $('scopeSummary').classList.add('multi-target-summary');
+  $('scopeSummary').textContent='Един статус за всички маркирани клетки. Вече попълнените ще бъдат заменени след потвърждение.';
+  $('resetCell').textContent='✓ Изчисти маркираните клетки · На лице';
+  renderChoices();$('statusDialog').showModal();
+};
 function render(){
  $('monthLabel').textContent=`${MONTHS[selected.getMonth()]} ${selected.getFullYear()}`;
  const ds=dateStr(selected),hol=holiday(selected);
@@ -1055,7 +1224,7 @@ function render(){
  $('weekMode').classList.toggle('active',viewMode==='week');$('weekMode').setAttribute('aria-pressed',String(viewMode==='week'));
  $('monthMode').classList.toggle('active',viewMode==='month');$('monthMode').setAttribute('aria-pressed',String(viewMode==='month'));
  $('rosterTitle').textContent=viewMode==='month'?'Месечен график':'Седмичен график';
- $('rosterHint').textContent=viewMode==='month'?'Плъзни датите, имената остават на място':'Избери клетка за промяна';
+ $('rosterHint').textContent=multiSelectMode?'Докосни или плъзни за още клетки':(viewMode==='month'?'Мести датите · Задръж клетка за маркиране':'Задръж за маркиране');
  $('weekLabel').textContent=viewMode==='month'?`Целият ${MONTHS[selected.getMonth()].toLowerCase()} · ${dates.length} дни`:`${pad(dates[0].getDate())}.${pad(dates[0].getMonth()+1)} – ${pad(dates[6].getDate())}.${pad(dates[6].getMonth()+1)}`;
  const names=mk('div','namehead','ЛИЧЕН СЪСТАВ');$('dateHead').replaceChildren(names);
  for(const d of dates){const weekend=dow(d)>=5;const dt=mk('div','');const btn=mk('button','datebutton'+(weekend?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));btn.type='button';btn.title=holiday(d)||dateStr(d);btn.setAttribute('aria-label',`${dateStr(d)}${holiday(d)?' · '+holiday(d):''}`);btn.append(mk('span','letter',SHORT_DAYS[dow(d)]),mk('span','num',String(d.getDate())));btn.onclick=()=>selectDate(d);dt.append(btn);$('dateHead').append(dt)}
@@ -1063,11 +1232,12 @@ function render(){
  if(!state.people.length){const empty=mk('div','empty','Списъкът е празен. Добави личния състав, за да започнеш.');const button=mk('button','','Добави имена');button.type='button';button.onclick=openNames;empty.append(mk('div'),button);roster.append(empty)}else{
  let group=null;for(const p of state.people){if(p.group!==group){group=p.group;const groupLine=mk('div','group-row');groupLine.append(mk('span','group-label',group||'Без група'));roster.append(groupLine)}
  const row=mk('div','row personrow');const name=mk('div','namecell');let match=p.name.match(/^(лейт\.|ст\.\s*серж\.?|мл\.\s*серж\.?|серж\.?|ефр\.?|р-к|ред\.?)\s+(.+)$/i);name.append(mk('span','rank',match?match[1]:' '),mk('span','personname',match?match[2]:p.name));name.title=p.name;row.append(name);
- for(const d of dates){const holder=mk('div','gridcell'+(dow(d)>=5?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));const status=statusOf(p,d);const button=mk('button','statuscell '+statusClass(status),displayStatus(status));button.type='button';button.title=`${p.name} · ${dateStr(d)} · ${statusLabel(status)}`;button.setAttribute('aria-label',button.title);button.onclick=()=>openStatus(p,d);holder.append(button);row.append(holder)}roster.append(row)} }
+ for(const d of dates){const holder=mk('div','gridcell'+(dow(d)>=5?' weekend':'')+(holiday(d)?' holiday':'')+(dateStr(d)===ds?' selected':''));const status=statusOf(p,d);const button=mk('button','statuscell '+statusClass(status),displayStatus(status));button.type='button';button.title=`${p.name} · ${dateStr(d)} · ${statusLabel(status)}`;button.setAttribute('aria-label',button.title);button.dataset.cellKey=selectedCellKey(p,d);button.onclick=()=>{if(ignoreClickKey===button.dataset.cellKey&&Date.now()<ignoreClickUntil){ignoreClickKey='';return}if(multiSelectMode){toggleMultiCell(button.dataset.cellKey);return}openStatus(p,d)};holder.append(button);row.append(holder)}roster.append(row)} }
  viewport.scrollTop=scrollY;
  const monthIdentity=`${selected.getFullYear()}-${selected.getMonth()}`;
  if(viewMode==='month'&&(previousTableView!=='month'||previousTableMonth!==monthIdentity))scrollMonthToSelected(viewport);else viewport.scrollLeft=viewMode==='month'?scrollX:0;
  previousTableView=viewMode;previousTableMonth=monthIdentity;
+ updateMultiHighlights();
  $('holidayInfo').textContent=hol?`★ ${hol} · ${pad(selected.getDate())}.${pad(selected.getMonth()+1)} · Докосни клетка за промяна.`:selected.getFullYear()===2026?'Празна клетка означава „На лице“. Събота и неделя са сиви; празниците са със златна линия.':'Празна клетка означава „На лице“. За тази година няма проверен списък с празници.';
 }
 // Every cell still opens in the single-day mode. A whole calendar week or
@@ -1080,6 +1250,7 @@ function parseLocalDate(value){
   return dateStr(d)===value?d:null;
 }
 function setEditScope(mode){
+  $('scopeChoices').hidden=false;$('scopeSummary').classList.remove('multi-target-summary');
   editScope=['day','week','range'].includes(mode)?mode:'day';
   for(const [key,id] of [['day','scopeDay'],['week','scopeWeek'],['range','scopeRange']]){
     $(id).classList.toggle('active',key===editScope);
@@ -1135,14 +1306,21 @@ function renderChoices(){
 }
 function setStatus(code){
   if(!canEdit())return;
-  const dates=datesForEdit();if(!dates)return;
-  const changes=dates.map(day=>({key:`${pickedPerson.id}|${dateStr(day)}`,code})).filter(({key,code})=>(state.statuses[key]||'Р')!==code);
-  if(!changes.length){$('statusDialog').close();notify('Няма нови промени.');return}
-  if(dates.length>1){
+  const multi=editScope==='multi';
+  let dates=[],changes=[];
+  if(multi){
+    changes=[...selectedCells.keys()].map(key=>({key,code})).filter(({key})=>(state.statuses[key]||'Р')!==code);
+  }else{
+    dates=datesForEdit();if(!dates)return;
+    changes=dates.map(day=>({key:`${pickedPerson.id}|${dateStr(day)}`,code})).filter(({key})=>(state.statuses[key]||'Р')!==code);
+  }
+  if(!changes.length){$('statusDialog').close();if(multi)clearMultiSelection();notify('Няма нови промени.');return}
+  if(multi||dates.length>1){
     const conflicts=changes.filter(({key})=>state.statuses[key]&&state.statuses[key]!=='Р').length;
     const target=code==='Р'?'На лице':statusLabel(code);
+    const who=multi?'за всички избрани хора':`на ${pickedPerson.name}`;
     const warning=conflicts?`\nВнимание: ще бъдат заменени ${conflicts} вече попълнени статуса.`:'';
-    if(!confirm(`Да зададем „${target}“ на ${pickedPerson.name} за ${changes.length} ${changes.length===1?'ден':'дни'}?${warning}`))return;
+    if(!confirm(`Да зададем „${target}“ ${who} за ${changes.length} ${changes.length===1?'клетка':'клетки'}?${warning}`))return;
   }
   const previous=Object.fromEntries(changes.map(({key})=>[key,state.statuses[key]]));
   for(const {key} of changes){if(code==='Р')delete state.statuses[key];else state.statuses[key]=code}
@@ -1151,9 +1329,9 @@ function setStatus(code){
     return;
   }
   for(const {key} of changes)enqueueCell(key,code);
-  selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);
-  $('statusDialog').close();render();
-  notify(changes.length===1?'Промяната е запазена':`${changes.length} дни са записани · ${code==='Р'?'На лице':statusLabel(code)}`);
+  if(!multi){selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected)}
+  $('statusDialog').close();if(multi)clearMultiSelection();render();
+  notify(changes.length===1?'Промяната е запазена':`${changes.length} клетки са записани · ${code==='Р'?'На лице':statusLabel(code)}`);
 }
 function resetStatus(){setStatus('Р')}
 function parsePeople(raw){const lines=raw.replace(/\u00a0/g,' ').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);const known=['Командване','КИО','Транспортно','Ремонт и евакуация'];let group='Командване';const out=[];for(const line of lines){if(line.includes('|')){const i=line.indexOf('|'),nextGroup=line.slice(0,i).trim(),name=line.slice(i+1).trim();if(nextGroup)group=nextGroup;if(name)out.push({group,name});continue}const heading=known.find(x=>x.toLocaleLowerCase('bg')===line.toLocaleLowerCase('bg'));if(heading){group=heading;continue}if(line===line.toLocaleUpperCase('bg')&&line.length<40&&!/\d/.test(line)){group=line;continue}out.push({group,name:line})}return out}
