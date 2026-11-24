@@ -286,6 +286,19 @@ body.cloud-viewer .viewer-banner{display:flex}
 .gate-actions button:disabled{opacity:.5;cursor:progress}
 .gate-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 @media(prefers-reduced-motion:reduce){.gate-actions button,.cloud-access-tabs button{transition:none}}
+
+/* Clear status scope on mobile: single date, whole Mon–Sun week, or chosen date range. */
+.edit-scope{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:4px;margin:13px 0 8px;background:#eaf0e9;border:1px solid #d4e0d7;border-radius:13px}
+.edit-scope button{min-width:0;min-height:40px;border:0;border-radius:10px;background:transparent;color:#476354;font-size:12px;font-weight:800;padding:7px 3px}
+.edit-scope button.active{background:#18513b;color:#fff;box-shadow:0 2px 7px #17392825}
+.range-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0}
+.range-fields[hidden]{display:none!important}
+.range-fields label{display:grid;gap:5px;font-size:11px;font-weight:800;color:#31523f}
+.range-fields input{box-sizing:border-box;width:100%;min-width:0;min-height:41px;padding:7px 5px;border-radius:10px;border:1px solid #b8cfbd;background:#fff;color:#244636;font:inherit;font-size:12px}
+.scope-summary{font-size:11px;line-height:1.4;color:#51705b;background:#f3f7f1;padding:9px 11px;border:1px solid #dce8dc;border-radius:10px;margin:0 0 5px}
+@media(max-width:355px){.edit-scope button{font-size:11px}.range-fields input{font-size:11px}}
+/* Keep transient save tips ABOVE the confirmation bar, not on top of its button. */
+body.has-batch-confirm #toast{bottom:var(--toast-above-batch,220px);max-width:calc(100vw - 30px);white-space:normal;line-height:1.4;text-align:center}
 </style>
 </head>
 <body class="secure-locked">
@@ -334,7 +347,18 @@ body.cloud-viewer .viewer-banner{display:flex}
 <button type="button" id="navSchedule" class="active"><span class="nav-icon">▦</span> График</button>
 <button type="button" id="navStats"><span class="nav-icon">▥</span> Справка</button>
 </nav>
-<dialog id="statusDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title" id="personTitle"></h2><div class="modal-sub" id="statusDate"></div></div><button type="button" class="closemodal" id="closeStatus" aria-label="Затвори">×</button></div><div class="tabline"><button type="button" class="active" data-tab="base" id="baseTab">Статуси</button><button type="button" data-tab="duty" id="dutyTab">Видове наряди</button></div><div class="pickgrid" id="choiceGrid"></div><button class="widebtn" id="resetCell" type="button">✓ Изчисти клетката · На лице</button></div></dialog>
+<dialog id="statusDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title" id="personTitle"></h2><div class="modal-sub" id="statusDate"></div></div><button type="button" class="closemodal" id="closeStatus" aria-label="Затвори">×</button></div>
+<div class="edit-scope" role="group" aria-label="За кои дни да се приложи статусът">
+  <button type="button" id="scopeDay" class="active" aria-pressed="true">Един ден</button>
+  <button type="button" id="scopeWeek" aria-pressed="false">Цяла седмица</button>
+  <button type="button" id="scopeRange" aria-pressed="false">Период</button>
+</div>
+<div id="rangeFields" class="range-fields" hidden>
+  <label>От дата<input id="rangeFrom" type="date"></label>
+  <label>До дата<input id="rangeTo" type="date"></label>
+</div>
+<div class="scope-summary" id="scopeSummary" aria-live="polite">Статус само за избрания ден.</div>
+<div class="tabline"><button type="button" class="active" data-tab="base" id="baseTab">Статуси</button><button type="button" data-tab="duty" id="dutyTab">Видове наряди</button></div><div class="pickgrid" id="choiceGrid"></div><button class="widebtn" id="resetCell" type="button">✓ Изчисти клетката · На лице</button></div></dialog>
 <dialog id="namesDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">Личен състав</h2><div class="modal-sub">Един човек на ред. Групите са отделни заглавия.</div></div><button class="closemodal" type="button" id="cancelNames" aria-label="Затвори">×</button></div><p style="font-size:12px;color:#5b7468;margin:12px 0">Приема и формат „Група | звание и име“. Вече въведените имена се зареждат автоматично.</p><textarea class="namearea" id="namesText" placeholder="Командване&#10;лейт. Иван Иванов&#10;КИО&#10;ефр. Петър Петров"></textarea><div class="error" id="namesError"></div><div class="modal-actions"><button type="button" id="discardNames">Отказ</button><button type="button" class="primary" id="saveNames">Запази списъка</button></div></div></dialog>
 <dialog id="menuDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">Настройки</h2><div class="modal-sub">Личен състав и резервни копия</div></div><button class="closemodal" type="button" id="closeMenu" aria-label="Затвори">×</button></div>
  <div class="menu-grid">
@@ -547,6 +571,8 @@ function renderConfirmBar(){
   const active=isNonCommanderEditor();
   const count=active?Object.keys(readConfirmBatch().items).length:0;
   bar.hidden=!active||count===0;
+  document.body.classList.toggle('has-batch-confirm',!bar.hidden);
+  if(!bar.hidden)requestAnimationFrame(positionToastAboveBatch);
   if(!active||!count)return;
   $('batchConfirmCount').textContent=count===1?'1 промяна за потвърждаване':`${count} промени за потвърждаване`;
   const syncing=hasUnsyncedChanges();
@@ -554,6 +580,13 @@ function renderConfirmBar(){
   $('confirmBatchButton').disabled=syncing||batchConfirmBusy;
   $('confirmBatchButton').textContent=batchConfirmBusy?'Потвърждаване…':'Потвърди промените';
 }
+function positionToastAboveBatch(){
+  const bar=$('batchConfirmBar');
+  if(!bar||bar.hidden)return;
+  const top=bar.getBoundingClientRect().top;
+  document.documentElement.style.setProperty('--toast-above-batch',Math.max(100,Math.ceil(window.innerHeight-top+13))+'px');
+}
+window.addEventListener('resize',positionToastAboveBatch);
 function registerEditForConfirmation(key){
   if(!isNonCommanderEditor())return;
   const batch=readConfirmBatch();
@@ -973,7 +1006,7 @@ window.addEventListener('online',()=>{if(canEdit())flushPending()});
 window.addEventListener('offline',()=>{if(cloud.mode==='active')cloudMessage('Няма интернет · промените се пазят локално')});
 
 function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));$('saveLabel').textContent=cloud.mode==='active'?'Запазено локално · синхронизиране':'Запазено на устройството';$('saveDot').style.background='#9be4ab';$('savedTime').textContent='Автоматично';return true}catch(e){$('saveLabel').textContent='Грешка при запазване';$('saveDot').style.background='#ffc4c4';alert('Не успях да запазя данните. Провери дали не си в частен режим и дали има свободно пространство.');return false}}
-function notify(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),1800)}
+function notify(msg){positionToastAboveBatch();$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2100)}
 function defaultStatus(d){return 'Р'}
 function statusOf(p,d){const stored=state.statuses[`${p.id}|${dateStr(d)}`];return typeof stored==='string'&&stored?stored:defaultStatus(d)}
 function mk(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=txt;return el}
@@ -1037,10 +1070,92 @@ function render(){
  previousTableView=viewMode;previousTableMonth=monthIdentity;
  $('holidayInfo').textContent=hol?`★ ${hol} · ${pad(selected.getDate())}.${pad(selected.getMonth()+1)} · Докосни клетка за промяна.`:selected.getFullYear()===2026?'Празна клетка означава „На лице“. Събота и неделя са сиви; празниците са със златна линия.':'Празна клетка означава „На лице“. За тази година няма проверен списък с празници.';
 }
-function openStatus(person,date){if(!canEdit()){notify('Само редакторите могат да променят графика');return}pickedPerson=person;pickedDate=date;choiceTab='base';$('personTitle').textContent=person.name;$('statusDate').textContent=`${pad(date.getDate())}.${pad(date.getMonth()+1)}.${date.getFullYear()} · ${statusLabel(statusOf(person,date))}`;renderChoices();$('statusDialog').showModal()}
-function renderChoices(){for(const t of ['base','duty'])$(t+'Tab').classList.toggle('active',t===choiceTab);const options=choiceTab==='duty'?DUTIES.map(code=>['Н:'+code,code]):BASIC;const current=statusOf(pickedPerson,pickedDate);const container=$('choiceGrid');container.replaceChildren(...options.map(([code,label])=>{const button=mk('button',choiceTab==='duty'?'duty':statusClass(code),choiceTab==='duty'?label:(code==='П'?'По':code==='КМ'?'К':code));button.type='button';if(code===current)button.classList.add('chosen');if(choiceTab==='base')button.append(mk('small','',label));button.onclick=()=>setStatus(code);return button}))}
-function setStatus(code){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];if((previous||'Р')===code){$('statusDialog').close();return}state.statuses[k]=code;if(!save()){if(previous===undefined)delete state.statuses[k];else state.statuses[k]=previous;return}enqueueCell(k,code);selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);$('statusDialog').close();render();notify('Промяната е запазена')}
-function resetStatus(){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];if(!previous||previous==='Р'){$('statusDialog').close();return}delete state.statuses[k];if(!save()){state.statuses[k]=previous;return}enqueueCell(k,'Р');$('statusDialog').close();selectDate(pickedDate);notify('Изчистено · На лице')}
+// Every cell still opens in the single-day mode. A whole calendar week or
+// a custom period can be selected without dragging across the tiny grid.
+let editScope='day';
+function formatShortDate(d){return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`}
+function parseLocalDate(value){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value||''))return null;
+  const [y,m,day]=value.split('-').map(Number),d=makeDate(y,m-1,day);
+  return dateStr(d)===value?d:null;
+}
+function setEditScope(mode){
+  editScope=['day','week','range'].includes(mode)?mode:'day';
+  for(const [key,id] of [['day','scopeDay'],['week','scopeWeek'],['range','scopeRange']]){
+    $(id).classList.toggle('active',key===editScope);
+    $(id).setAttribute('aria-pressed',String(key===editScope));
+  }
+  $('rangeFields').hidden=editScope!=='range';
+  const first=editScope==='day'?pickedDate:monday(pickedDate);
+  const last=editScope==='day'?pickedDate:addDays(first,6);
+  if(editScope==='day')$('scopeSummary').textContent='Само '+formatShortDate(pickedDate)+' · избери статус по-долу.';
+  if(editScope==='week')$('scopeSummary').textContent='Цялата седмица: '+formatShortDate(first)+' – '+formatShortDate(last)+' (7 дни).';
+  if(editScope==='range'){
+    if(!$('rangeFrom').value)$('rangeFrom').value=dateStr(first);
+    if(!$('rangeTo').value)$('rangeTo').value=dateStr(last);
+    updateRangeSummary();
+  }
+  $('resetCell').textContent=editScope==='day'?'✓ Изчисти клетката · На лице':'✓ Изчисти избраните дни · На лице';
+}
+function updateRangeSummary(){
+  if(editScope!=='range')return;
+  const from=parseLocalDate($('rangeFrom').value),to=parseLocalDate($('rangeTo').value);
+  if(!from||!to){$('scopeSummary').textContent='Избери начална и крайна дата.';return}
+  const days=Math.round((Date.UTC(to.getFullYear(),to.getMonth(),to.getDate())-Date.UTC(from.getFullYear(),from.getMonth(),from.getDate()))/86400000)+1;
+  $('scopeSummary').textContent=days<1?'Крайната дата трябва да е след началната.':`${formatShortDate(from)} – ${formatShortDate(to)} · ${days} ${days===1?'ден':'дни'}`+(days>62?' · Максимум 62 дни наведнъж.':'');
+}
+function datesForEdit(){
+  if(editScope==='day')return [pickedDate];
+  if(editScope==='week')return Array.from({length:7},(_,i)=>addDays(monday(pickedDate),i));
+  const from=parseLocalDate($('rangeFrom').value),to=parseLocalDate($('rangeTo').value);
+  if(!from||!to){notify('Избери валидни дати за периода.');return null}
+  const count=Math.round((Date.UTC(to.getFullYear(),to.getMonth(),to.getDate())-Date.UTC(from.getFullYear(),from.getMonth(),from.getDate()))/86400000)+1;
+  if(count<1){notify('Крайната дата трябва да е след началната.');return null}
+  if(count>62){notify('Избери период до 62 дни.');return null}
+  return Array.from({length:count},(_,i)=>addDays(from,i));
+}
+function openStatus(person,date){
+  if(!canEdit()){notify('Само редакторите могат да променят графика');return}
+  pickedPerson=person;pickedDate=date;choiceTab='base';
+  $('personTitle').textContent=person.name;
+  $('statusDate').textContent=`${formatShortDate(date)} · ${statusLabel(statusOf(person,date))}`;
+  $('rangeFrom').value='';$('rangeTo').value='';
+  setEditScope('day');renderChoices();$('statusDialog').showModal();
+}
+function renderChoices(){
+  for(const t of ['base','duty'])$(t+'Tab').classList.toggle('active',t===choiceTab);
+  const options=choiceTab==='duty'?DUTIES.map(code=>['Н:'+code,code]):BASIC;
+  const current=statusOf(pickedPerson,pickedDate),container=$('choiceGrid');
+  container.replaceChildren(...options.map(([code,label])=>{
+    const button=mk('button',choiceTab==='duty'?'duty':statusClass(code),choiceTab==='duty'?label:(code==='П'?'По':code==='КМ'?'К':code));
+    button.type='button';if(editScope==='day'&&code===current)button.classList.add('chosen');
+    if(choiceTab==='base')button.append(mk('small','',label));
+    button.onclick=()=>setStatus(code);return button;
+  }));
+}
+function setStatus(code){
+  if(!canEdit())return;
+  const dates=datesForEdit();if(!dates)return;
+  const changes=dates.map(day=>({key:`${pickedPerson.id}|${dateStr(day)}`,code})).filter(({key,code})=>(state.statuses[key]||'Р')!==code);
+  if(!changes.length){$('statusDialog').close();notify('Няма нови промени.');return}
+  if(dates.length>1){
+    const conflicts=changes.filter(({key})=>state.statuses[key]&&state.statuses[key]!=='Р').length;
+    const target=code==='Р'?'На лице':statusLabel(code);
+    const warning=conflicts?`\nВнимание: ще бъдат заменени ${conflicts} вече попълнени статуса.`:'';
+    if(!confirm(`Да зададем „${target}“ на ${pickedPerson.name} за ${changes.length} ${changes.length===1?'ден':'дни'}?${warning}`))return;
+  }
+  const previous=Object.fromEntries(changes.map(({key})=>[key,state.statuses[key]]));
+  for(const {key} of changes){if(code==='Р')delete state.statuses[key];else state.statuses[key]=code}
+  if(!save()){
+    for(const {key} of changes){if(previous[key]===undefined)delete state.statuses[key];else state.statuses[key]=previous[key]}
+    return;
+  }
+  for(const {key} of changes)enqueueCell(key,code);
+  selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);
+  $('statusDialog').close();render();
+  notify(changes.length===1?'Промяната е запазена':`${changes.length} дни са записани · ${code==='Р'?'На лице':statusLabel(code)}`);
+}
+function resetStatus(){setStatus('Р')}
 function parsePeople(raw){const lines=raw.replace(/\u00a0/g,' ').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);const known=['Командване','КИО','Транспортно','Ремонт и евакуация'];let group='Командване';const out=[];for(const line of lines){if(line.includes('|')){const i=line.indexOf('|'),nextGroup=line.slice(0,i).trim(),name=line.slice(i+1).trim();if(nextGroup)group=nextGroup;if(name)out.push({group,name});continue}const heading=known.find(x=>x.toLocaleLowerCase('bg')===line.toLocaleLowerCase('bg'));if(heading){group=heading;continue}if(line===line.toLocaleUpperCase('bg')&&line.length<40&&!/\d/.test(line)){group=line;continue}out.push({group,name:line})}return out}
 function openNames(){if(!canEdit()){notify('Само редакторите могат да променят личния състав');return}if($('menuDialog').open)$('menuDialog').close();$('namesText').value=state.people.map(p=>p.group+' | '+p.name).join('\n');$('namesError').style.display='none';$('namesDialog').showModal()}
 function saveNames(){if(!canEdit())return;const parsed=parsePeople($('namesText').value);if(!parsed.length){$('namesError').textContent='Въведи поне един човек.';$('namesError').style.display='block';return}const old=state.people,matched=new Set();const people=parsed.map((entry,i)=>{const same=old.find(p=>p.name===entry.name&&p.group===entry.group&&!matched.has(p.id));if(same){matched.add(same.id);return same}return {id:'custom'+Date.now()+'_'+i,name:entry.name,group:entry.group}});state.people=people;if(!save()){state.people=old;return}enqueueRoster();$('namesDialog').close();render();notify('Списъкът е запазен')}
@@ -1048,7 +1163,7 @@ function exportBackup(){const payload={...state,format:'grafik-v1',exportedAt:ne
 async function importBackup(input){if(!canEdit()){alert('Само редакторите могат да зареждат резервни копия.');return}const file=input.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!validState(payload)||!payload.people.every(p=>p&&typeof p.id==='string'&&typeof p.name==='string'))throw Error('Невалиден формат на файла');if(!confirm('Това ще замени ОБЩИЯ график за всички хора. Направи резервно копие. Продължаваш ли?'))return;const previous=state;state={people:payload.people,statuses:payload.statuses};if(!save()){state=previous;return}if(cloud.mode==='active'){cloudMessage('Възстановеният график се качва...');await uploadFullCloud()}render();notify('Копието е възстановено')}catch(e){alert('Възстановяването не успя: '+e.message)}finally{input.value=''}}
 $('prevMonth').onclick=()=>changeMonth(-1);$('nextMonth').onclick=()=>changeMonth(1);$('today').onclick=()=>selectDate(makeDate(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()));$('prevWeek').onclick=()=>viewMode==='month'?changeMonth(-1):changeWeek(-1);$('nextWeek').onclick=()=>viewMode==='month'?changeMonth(1):changeWeek(1);
 $('weekMode').onclick=()=>switchView('week');$('monthMode').onclick=()=>switchView('month');
-$('closeStatus').onclick=()=>$('statusDialog').close();$('baseTab').onclick=()=>{choiceTab='base';renderChoices()};$('dutyTab').onclick=()=>{choiceTab='duty';renderChoices()};$('resetCell').onclick=resetStatus;
+$('closeStatus').onclick=()=>$('statusDialog').close();$('baseTab').onclick=()=>{choiceTab='base';renderChoices()};$('dutyTab').onclick=()=>{choiceTab='duty';renderChoices()};$('resetCell').onclick=resetStatus;for(const [id,mode] of [['scopeDay','day'],['scopeWeek','week'],['scopeRange','range']])$(id).onclick=()=>{setEditScope(mode);renderChoices()};for(const id of ['rangeFrom','rangeTo'])$(id).onchange=updateRangeSummary;
 $('editNames').onclick=openNames;$('cancelNames').onclick=()=>$('namesDialog').close();$('discardNames').onclick=()=>$('namesDialog').close();$('saveNames').onclick=saveNames;
 $('export').onclick=exportBackup;$('import').onclick=()=>$('backupFile').click();$('backupFile').onchange=e=>importBackup(e.target);
 $('cloudInfo').onclick=()=>{if($('menuDialog').open)$('menuDialog').close();hideCloudError();showCloudUI();$('cloudDialog').showModal()};$('closeCloud').onclick=()=>$('cloudDialog').close();$('doneCloud').onclick=()=>$('cloudDialog').close();
