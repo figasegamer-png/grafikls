@@ -174,14 +174,32 @@ opacity:1;visibility:visible;transform:scale(1);transition:opacity .48s ease,tra
 .notice-btn:disabled{opacity:.5}
 #noticeBadge{position:absolute;right:-4px;top:-5px;border-radius:100px;background:#b54b3c;color:#fff;font-size:10px;min-width:17px;padding:2px 4px}
 #noticeBadge[hidden]{display:none}
-.notice-list{max-height:62dvh;overflow:auto;display:grid;gap:10px;margin:18px 0}
-.notice-item{padding:13px;border:1px solid #d9e3d8;background:#f6f9f5;border-radius:13px;display:grid;gap:5px}
-.notice-item strong{color:#174834;font-size:14px}.notice-item span{color:#5c7664;font-size:12px}
-.notice-item .notice-actor{color:#245641;font-weight:750;font-size:12px;overflow-wrap:anywhere}
-.notice-item .notice-change{color:#153e2c;font-size:12px;font-weight:700;line-height:1.55;padding:8px 9px;background:#e7f0e8;border-radius:8px;overflow-wrap:anywhere}
-.notice-item .notice-metadata{color:#738278;font-size:11px}
-.notice-item .notice-context{font-size:12px;color:#3f6250;font-weight:650}
-.notice-item .notice-arrow{color:#b6792e;font-size:14px;font-weight:850;padding:0 4px}
+.notice-list{max-height:66dvh;overflow:auto;display:grid;gap:12px;margin:16px 0;padding:1px}
+.notice-item{padding:13px;border:1px solid #ccd9cf;border-left:4px solid #628c68;background:#f7faf7;border-radius:14px;display:grid;gap:10px;box-shadow:0 2px 9px #1e423a0b}
+.notice-item.notice-unread{border-left-color:#a77b2b;background:#fffdf7}
+.notice-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.notice-item .notice-kind{color:#163e2c;font-size:13px;font-weight:850;letter-spacing:.01em}
+.notice-item .notice-time{font-size:11px;color:#718176;white-space:nowrap}
+.notice-actorline{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px}
+.notice-item .notice-actorlabel{font-size:11px;color:#6c7c70}
+.notice-item .notice-actorname{font-size:12px;font-weight:850;color:#174b35;background:#e7efe7;padding:6px 9px;border-radius:8px;overflow-wrap:anywhere}
+.notice-detail{display:flex;align-items:center;flex-wrap:wrap;gap:5px 9px;border-top:1px solid #dae4dd;padding-top:10px}
+.notice-item .notice-person{color:#183f2e;font-size:14px;font-weight:850}
+.notice-item .notice-date{font-size:12px;color:#244e39;font-weight:800;background:#edf2e8;padding:4px 7px;border-radius:7px}
+.notice-item .notice-group{color:#718176;font-size:11px}
+.notice-status-row{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);gap:6px;align-items:center}
+.notice-status{display:flex;flex-direction:column;min-width:0;gap:5px;border:1px solid #d6dfd6;border-radius:10px;padding:10px 9px;overflow-wrap:anywhere}
+.notice-status.notice-old{background:#f0f2f0;color:#465b4e}
+.notice-status.notice-new{background:#d9eddd;border-color:#93c4a0;color:#123e2a}
+.notice-item .notice-status-label{font-size:9px;letter-spacing:.09em;font-weight:900;color:inherit;opacity:.8}
+.notice-status strong{font-size:14px;line-height:1.27;font-weight:850;color:inherit}
+.notice-change-arrow{text-align:center;font-weight:900;color:#a67a2e;font-size:20px}
+.notice-item .notice-change{color:#153e2c;font-size:13px;font-weight:700;line-height:1.55;padding:11px;background:#e8f1e9;border-radius:9px;overflow-wrap:anywhere}
+.notice-item .notice-batch-summary{display:flex;align-items:center;gap:10px}
+.notice-count{display:grid;place-items:center;min-width:38px;height:38px;border-radius:10px;background:#1d5c42;color:#fff;font-size:18px}
+.notice-item .notice-metadata{color:#7a8980;font-size:10px}
+.notice-item .notice-context{font-size:12px;color:#3f6250;font-weight:700}
+@media(max-width:360px){.notice-item{padding:10px}.notice-status strong{font-size:12px}.notice-status{padding:8px 6px}}
 .commander-reminder .sheet-overlay{border-top:5px solid #bba35d}
 .commander-reminder h2{font-size:18px;line-height:1.35;letter-spacing:.025em;font-weight:850;color:#143f2c;margin:0 0 10px}
 .commander-reminder p{line-height:1.6;font-size:13px;color:#506b59;margin:5px 0}
@@ -488,6 +506,17 @@ function cellRef(key){return cloud.sdk.doc(cellsRef(),encodeURIComponent(key))}
 function eventsRef(){return cloud.sdk.collection(cloud.db,teamPath+'/events')}
 function currentEditorEmail(){return String(cloud.auth?.currentUser?.email||cloud.email||'').trim().toLowerCase()}
 const COMMANDER_EMAIL='presli100@abv.bg';
+// Friendly names used for both historic and new notifications; original event ids
+// and actor emails remain unchanged in Firestore for audit and synchronization.
+const EDITOR_DISPLAY_NAMES={
+  'presli100@abv.bg':'лейт. Преслав Петров',
+  'jivka_popova@abv.bg':'ст.серж Живка Попова'
+};
+function actorDisplayName(email,uid){
+  const normalized=String(email||'').trim().toLowerCase();
+  return EDITOR_DISPLAY_NAMES[normalized] || (normalized || (uid?'Профил '+String(uid).slice(0,9)+'…':'Неизвестен редактор'));
+}
+
 function showCommanderReminder(count=1){
   if(!canEdit()||!currentEditorEmail()||currentEditorEmail()===COMMANDER_EMAIL)return;
   const dialog=$('commanderReminderDialog');
@@ -630,7 +659,7 @@ function watchTeam(){
       const added=snap.docChanges().filter(c=>c.type==='added').map(c=>c.doc.data()).filter(e=>e.uid!==cloud.uid);
       const confirmed=added.find(e=>e.kind==='batch');
       if(confirmed){
-        const who=confirmed.actorEmail||'друг редактор';
+        const who=actorDisplayName(confirmed.actorEmail,confirmed.uid);
         notify(`Потвърден пакет от ${who}: ${confirmed.changeCount||1} промени`);
       }
     }
@@ -787,20 +816,39 @@ function renderNotices(events){
   let unread=0;
   for(const event of events){
     const timestamp=event.at?.toMillis?.()||0;
-    if(timestamp>seen&&event.uid!==cloud.uid)unread++;
-    const item=mk('div','notice-item');
-    item.append(mk('strong','',event.kind==='roster'?'Промяна в личния състав':event.kind==='batch'?'Потвърдени промени':'Промяна в графика'));
-    const actor=event.actorEmail|| (event.uid?'Профил '+event.uid.slice(0,9)+'…':'Неизвестен редактор');
-    item.append(mk('span','notice-actor','Извършил: '+actor));
+    const isUnread=timestamp>seen&&event.uid!==cloud.uid;
+    if(isUnread)unread++;
+    const item=mk('article','notice-item'+(isUnread?' notice-unread':''));
+    const title=event.kind==='roster'?'Личен състав':event.kind==='batch'?'Потвърдени промени':'Промяна в графика';
+    const head=mk('div','notice-head');
+    head.append(mk('strong','notice-kind',title));
+    if(timestamp)head.append(mk('span','notice-time',new Date(timestamp).toLocaleString('bg-BG',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
+    item.append(head);
+    const actor=actorDisplayName(event.actorEmail,event.uid);
+    const actorRow=mk('div','notice-actorline');
+    actorRow.append(mk('span','notice-actorlabel','Извършил промяната'));
+    actorRow.append(mk('strong','notice-actorname',actor));
+    item.append(actorRow);
     if(event.kind==='cell'){
-      if(event.person)item.append(mk('span','notice-context',event.person+(event.group?' · '+event.group:'')));
+      const detail=mk('div','notice-detail');
+      if(event.person)detail.append(mk('strong','notice-person',event.person));
+      if(event.day)detail.append(mk('span','notice-date','📅 '+readableEventDate(event.day)));
+      if(event.group)detail.append(mk('span','notice-group',event.group));
+      if(detail.childNodes.length)item.append(detail);
       if(event.oldCode!==undefined&&event.newCode!==undefined){
-        item.append(mk('div','notice-change',readableChange(event.oldCode)+' → '+readableChange(event.newCode)));
-      }else item.append(mk('span','notice-context',event.note||'Променен статус (стар запис)'));
-      if(event.day)item.append(mk('span','notice-metadata','Дата на графика: '+readableEventDate(event.day)));
+        const changes=mk('div','notice-status-row');
+        const oldBox=mk('div','notice-status notice-old');
+        oldBox.append(mk('span','notice-status-label','ПРЕДИ'),mk('strong','',readableChange(event.oldCode)));
+        const arrow=mk('span','notice-change-arrow','→');arrow.setAttribute('aria-label','променено на');
+        const newBox=mk('div','notice-status notice-new');
+        newBox.append(mk('span','notice-status-label','СЕГА'),mk('strong','',readableChange(event.newCode)));
+        changes.append(oldBox,arrow,newBox);item.append(changes);
+      } else item.append(mk('div','notice-change',event.note||'Променен статус (стар запис)'));
     } else if(event.kind==='batch'){
       const amount=Number(event.changeCount)||1;
-      item.append(mk('div','notice-change',`Приключени ${amount} ${amount===1?'промяна':'промени'} в общия график.`));
+      const change=mk('div','notice-change notice-batch-summary');
+      change.append(mk('strong','notice-count',String(amount)),mk('span','',amount===1?'потвърдена промяна':'потвърдени промени'));
+      item.append(change);
     } else if(event.kind==='roster'){
       if(event.note)item.append(mk('span','notice-context',event.note));
       const changes=[];
@@ -810,7 +858,7 @@ function renderNotices(events){
       if(!changes.length&&event.newCount!==undefined)changes.push('По списък: '+event.newCount);
       if(changes.length)item.append(mk('div','notice-change',changes.join(' · ')));
     }
-    if(timestamp)item.append(mk('span','notice-metadata','Извършена: '+new Date(timestamp).toLocaleString('bg-BG')));
+    if(timestamp)item.append(mk('span','notice-metadata','Записано: '+new Date(timestamp).toLocaleString('bg-BG')));
     host.append(item);
   }
   cloud.noticeCount=unread;
