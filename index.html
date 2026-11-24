@@ -144,6 +144,15 @@ dialog::backdrop{background:#081b14af;backdrop-filter:blur(3px)}.sheet-overlay{b
 @media(min-width:750px){:root{--name-col-width:195px;--date-col-width:36px}#scheduleSection.month-view .namecell .personname{font-size:12px}}
 @media(max-width:375px){:root{--name-col-width:126px;--date-col-width:33px}.view-switch button{padding:7px 8px}.roster-header-new{gap:7px}}
 
+/* Batch confirmation: edits continue to autosave, but the reminder appears once. */
+.batch-confirm-bar{position:fixed;z-index:11;bottom:calc(66px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(calc(100% - 22px),690px);display:flex;align-items:center;gap:12px;justify-content:space-between;padding:11px 12px;border-radius:16px;border:1px solid #92a98e;background:#f7faf3;box-shadow:0 7px 28px #0c271b45;color:#214836}
+.batch-confirm-bar[hidden]{display:none!important}
+.batch-confirm-copy{min-width:0;flex:1;display:grid;gap:3px}
+.batch-confirm-copy strong{font-size:12px;font-weight:850}
+.batch-confirm-copy small{font-size:10px;color:#58715f;line-height:1.3}
+.batch-confirm-bar button{background:#174d38;color:#fff;border:0;border-radius:11px;font-weight:850;font-size:12px;min-height:43px;padding:8px 12px;flex-shrink:0;max-width:51%}
+.batch-confirm-bar button:disabled{background:#6b8172;cursor:progress}
+@media(max-width:370px){.batch-confirm-bar{gap:7px;padding:9px}.batch-confirm-bar button{font-size:11px;padding:7px}.batch-confirm-copy strong{font-size:11px}}
 /* Team access gate and notification history */
 body:not(.cloud-ready)>header,body:not(.cloud-ready)>main,body:not(.cloud-ready)>.bottom-nav{display:none!important}
 body.cloud-ready #accessGate{opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.025);transition:opacity .48s ease,transform .48s ease,visibility 0s linear .48s}
@@ -298,6 +307,10 @@ body.cloud-viewer .viewer-banner{display:flex}
   <div class="legend"><span>Празно · На лице</span><span>Наряд · код</span><span>О · Отпуска</span><span>Б · Болничен</span><span>К · Командировка</span><span>По · Почивка</span></div>
 </section>
 </main>
+<div class="batch-confirm-bar" id="batchConfirmBar" hidden role="region" aria-label="Приключване на промените">
+  <div class="batch-confirm-copy"><strong id="batchConfirmCount">Има промени за потвърждаване</strong><small id="batchConfirmStatus">Записват се автоматично в общия график.</small></div>
+  <button id="confirmBatchButton" type="button">Потвърди промените</button>
+</div>
 <nav class="bottom-nav" aria-label="Основно меню">
 <button type="button" id="navPeople"><span class="nav-icon">☷</span> Състав</button>
 <button type="button" id="navSchedule" class="active"><span class="nav-icon">▦</span> График</button>
@@ -448,7 +461,7 @@ function showCloudUI(){
   $('enablePush').hidden=!cloud.ready||!canEdit();
   $('cloudVapid').value=cloud.config?.vapidKey||$('cloudVapid').value;
 }
-function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';}
+function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';renderConfirmBar();}
 function unlockSchedule(){
   // Do not skip the welcome screen when the browser restores a previous Firebase login.
   // Only an explicit tap on Влез or Преглед reveals the shared schedule.
@@ -459,7 +472,7 @@ function unlockSchedule(){
   document.body.classList.toggle('cloud-viewer',!editor);
   $('teamRoleText').textContent=editor?'РЕДАКТОР':'САМО ПРЕГЛЕД';
   for(const id of ['editNames','import','export','navPeople'])$(id).hidden=!editor;
-  showCloudUI();render();
+  showCloudUI();render();renderConfirmBar();
 }
 async function loadFirebaseSDK(){
   if(cloud.sdk)return cloud.sdk;
@@ -475,11 +488,77 @@ function cellRef(key){return cloud.sdk.doc(cellsRef(),encodeURIComponent(key))}
 function eventsRef(){return cloud.sdk.collection(cloud.db,teamPath+'/events')}
 function currentEditorEmail(){return String(cloud.auth?.currentUser?.email||cloud.email||'').trim().toLowerCase()}
 const COMMANDER_EMAIL='presli100@abv.bg';
-function showCommanderReminder(){
+function showCommanderReminder(count=1){
   if(!canEdit()||!currentEditorEmail()||currentEditorEmail()===COMMANDER_EMAIL)return;
   const dialog=$('commanderReminderDialog');
+  const text=dialog?.querySelector('p');
+  if(text)text.textContent=`Потвърдени ${count} ${count===1?'промяна':'промени'} в общия график. Уведоми командира на взвода за направените промени.`;
   if(dialog&&!dialog.open)dialog.showModal();
 }
+// Changes by the deputy are saved online immediately. The notification/reminder is
+// deliberately grouped into one explicit confirmation, not one popup per cell.
+const BATCH_CONFIRM_PREFIX='grafik-team-edit-confirm-v1:';
+let batchConfirmBusy=false;
+function isNonCommanderEditor(){return canEdit()&&currentEditorEmail()!==COMMANDER_EMAIL}
+function batchConfirmKey(){return BATCH_CONFIRM_PREFIX+(cloud.config?.projectId||'default')+':'+cloud.uid}
+function readConfirmBatch(){
+  try{
+    const value=JSON.parse(localStorage.getItem(batchConfirmKey()));
+    if(value&&typeof value==='object'&&value.items&&typeof value.items==='object')return value;
+  }catch(e){}
+  return {id:'',items:{}};
+}
+function writeConfirmBatch(batch){try{localStorage.setItem(batchConfirmKey(),JSON.stringify(batch))}catch(e){console.warn('Няма място за история на потвържденията',e)}}
+function hasUnsyncedChanges(){
+  if(!canEdit())return false;
+  const pending=getPending();return cloud.flushing||!!pending.people||Object.keys(pending.cells).length>0;
+}
+function renderConfirmBar(){
+  const bar=$('batchConfirmBar');if(!bar)return;
+  const active=isNonCommanderEditor();
+  const count=active?Object.keys(readConfirmBatch().items).length:0;
+  bar.hidden=!active||count===0;
+  if(!active||!count)return;
+  $('batchConfirmCount').textContent=count===1?'1 промяна за потвърждаване':`${count} промени за потвърждаване`;
+  const syncing=hasUnsyncedChanges();
+  $('batchConfirmStatus').textContent=syncing?'Синхронизиране… Изчакай записването.':'Записани в облака · приключи с един бутон.';
+  $('confirmBatchButton').disabled=syncing||batchConfirmBusy;
+  $('confirmBatchButton').textContent=batchConfirmBusy?'Потвърждаване…':'Потвърди промените';
+}
+function registerEditForConfirmation(key){
+  if(!isNonCommanderEditor())return;
+  const batch=readConfirmBatch();
+  if(!batch.id)batch.id='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  batch.items[key]=Date.now();
+  writeConfirmBatch(batch);renderConfirmBar();
+}
+async function confirmEditingSession(){
+  if(!isNonCommanderEditor()||batchConfirmBusy)return;
+  const batch=readConfirmBatch(),keys=Object.keys(batch.items);
+  if(!keys.length){renderConfirmBar();return;}
+  if(hasUnsyncedChanges()){
+    notify('Изчакай синхронизацията, преди да потвърдиш.');renderConfirmBar();return;
+  }
+  batchConfirmBusy=true;renderConfirmBar();
+  try{
+    const count=keys.length;
+    // A single group event marks the moment the deputy completes the edits;
+    // individual status events remain in the history with before/after values.
+    await cloud.sdk.setDoc(cloud.sdk.doc(eventsRef(),'confirm-'+batch.id),{
+      at:cloud.sdk.serverTimestamp(),uid:cloud.uid,actorEmail:currentEditorEmail(),
+      kind:'batch',note:'Потвърдени промени в графика',changeCount:count
+    });
+    const latest=readConfirmBatch();
+    if(latest.id===batch.id){
+      for(const key of keys)if(latest.items[key]===batch.items[key])delete latest.items[key];
+      if(Object.keys(latest.items).length===0)latest.id='';
+      writeConfirmBatch(latest);
+    }
+    showCommanderReminder(count);
+  }catch(e){cloudFail(e);notify('Потвърждението не се записа. Опитай отново.');}
+  finally{batchConfirmBusy=false;renderConfirmBar();}
+}
+$('confirmBatchButton').onclick=confirmEditingSession;
 
 function accessRef(uid){return cloud.sdk.doc(cloud.db,'access',uid)}
 function queueKey(){return TEAM_PENDING_PREFIX+cloud.config.projectId+':'+cloud.uid}
@@ -549,10 +628,10 @@ function watchTeam(){
     const events=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotices(events);
     if(cloud.notificationsReady){
       const added=snap.docChanges().filter(c=>c.type==='added').map(c=>c.doc.data()).filter(e=>e.uid!==cloud.uid);
-      if(added.length){
-        const newest=added[0];
-        const who=newest.actorEmail||'друг редактор';
-        notify(newest.person?`Промяна от ${who}: ${newest.person}`:`Нова промяна от ${who}`);
+      const confirmed=added.find(e=>e.kind==='batch');
+      if(confirmed){
+        const who=confirmed.actorEmail||'друг редактор';
+        notify(`Потвърден пакет от ${who}: ${confirmed.changeCount||1} промени`);
       }
     }
     cloud.notificationsReady=true;
@@ -561,11 +640,13 @@ function watchTeam(){
 function enqueueCell(key,code){
   if(!canEdit())return;
   const p=getPending();p.cells[key]={code,stamp:Date.now()};putPending(p);
+  registerEditForConfirmation('cell:'+key);
   cloudMessage('Промяната чака синхронизация');flushPending();
 }
 function enqueueRoster(){
   if(!canEdit())return;
   const p=getPending();p.people={people:structuredClone(state.people),stamp:Date.now()};putPending(p);
+  registerEditForConfirmation('roster');
   cloudMessage('Синхронизиране на списъка');flushPending();
 }
 function findPersonByCell(key){
@@ -599,7 +680,7 @@ async function flushPending(){
       });
       cloud.remotePeople=structuredClone(item.people);
       pending=getPending();if(pending.people?.stamp===item.stamp){pending.people=null;putPending(pending)}
-      if(wasChanged)showCommanderReminder();
+      if(wasChanged)renderConfirmBar();
     }
     for(const [key,item] of Object.entries(getPending().cells)){
       const person=findPersonByCell(key);
@@ -622,13 +703,13 @@ async function flushPending(){
       });
       if(!code||code==='Р')delete cloud.remoteStatuses[key];else cloud.remoteStatuses[key]=code;
       pending=getPending();if(pending.cells[key]?.stamp===stamp){delete pending.cells[key];putPending(pending)}
-      if(wasChanged)showCommanderReminder();
+      if(wasChanged)renderConfirmBar();
     }
     allSucceeded=true;
     cloudMessage('Всички промени са синхронизирани','success');
   }catch(e){cloudFail(e);cloudMessage('Промяната остава запазена на устройството','error')}
   finally{
-    cloud.flushing=false;adoptRemote();
+    cloud.flushing=false;adoptRemote();renderConfirmBar();
     if(allSucceeded&&canEdit()&&(getPending().people||Object.keys(getPending().cells).length))queueMicrotask(flushPending);
   }
 }
@@ -652,7 +733,7 @@ async function uploadFullCloud(){
     await b.commit();
   }
   cloud.remotePeople=roster;cloud.remoteStatuses=outgoing;putPending({people:null,cells:{}});
-  showCommanderReminder();
+  registerEditForConfirmation('bulk-import');
 }
 async function onChooseRemote(){cloud.mode='active';putPending({people:null,cells:{}});activateTeam();notify('Зареден е общият график')}
 async function onChooseLocal(){
@@ -708,7 +789,7 @@ function renderNotices(events){
     const timestamp=event.at?.toMillis?.()||0;
     if(timestamp>seen&&event.uid!==cloud.uid)unread++;
     const item=mk('div','notice-item');
-    item.append(mk('strong','',event.kind==='roster'?'Промяна в личния състав':'Промяна в графика'));
+    item.append(mk('strong','',event.kind==='roster'?'Промяна в личния състав':event.kind==='batch'?'Потвърдени промени':'Промяна в графика'));
     const actor=event.actorEmail|| (event.uid?'Профил '+event.uid.slice(0,9)+'…':'Неизвестен редактор');
     item.append(mk('span','notice-actor','Извършил: '+actor));
     if(event.kind==='cell'){
@@ -717,6 +798,9 @@ function renderNotices(events){
         item.append(mk('div','notice-change',readableChange(event.oldCode)+' → '+readableChange(event.newCode)));
       }else item.append(mk('span','notice-context',event.note||'Променен статус (стар запис)'));
       if(event.day)item.append(mk('span','notice-metadata','Дата на графика: '+readableEventDate(event.day)));
+    } else if(event.kind==='batch'){
+      const amount=Number(event.changeCount)||1;
+      item.append(mk('div','notice-change',`Приключени ${amount} ${amount===1?'промяна':'промени'} в общия график.`));
     } else if(event.kind==='roster'){
       if(event.note)item.append(mk('span','notice-context',event.note));
       const changes=[];
