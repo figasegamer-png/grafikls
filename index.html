@@ -376,7 +376,11 @@ const TEAM_PENDING_PREFIX='grafik-team-pending-v1:';
 const TEAM_CONNECTED_PREFIX='grafik-team-connected-v1:';
 const FB_SDK='13.3.0';
 const cloud={mode:'off',config:null,sdk:null,app:null,auth:null,db:null,uid:null,email:'',role:null,initSeq:0,unsub:[],remotePeople:[],remoteStatuses:{},ready:false,flushing:false,initialized:false,notificationsReady:false,noticeCount:0};
-const canEdit=()=>cloud.mode==='active'&&cloud.role==='editor';
+// Keep the welcome choice visible on every fresh page load, even if Firebase has a saved session.
+// Firebase remembers the credentials, but the visitor still decides between Влез and Преглед.
+let entryMode=null; // null | 'editor' | 'viewer' (never saved between page loads)
+const canEdit=()=>cloud.mode==='active'&&cloud.role==='editor'&&entryMode==='editor';
+const isViewOnly=()=>cloud.role==='viewer'||entryMode==='viewer';
 function cloudMessage(message,kind='normal'){
   const foot=$('cloudFootText');if(foot)foot.textContent=message;
   const top=$('cloudState');if(top)top.textContent=message;
@@ -427,20 +431,23 @@ function showCloudUI(){
   $('loginSection').hidden=!config||!editorLoginRequested||checking;
   $('linkedSection').hidden=!logged;
   $('cloudDecision').hidden=cloud.mode!=='choose';
-  $('cloudUser').textContent=logged?(cloud.role==='viewer'?'САМО ПРЕГЛЕД · Без регистрация':`${cloud.email||'Профил'} · ${cloud.role==='editor'?'Редактор':'Няма права'}`):'';
-  $('switchToEditor').hidden=cloud.role!=='viewer';
-  $('cloudUseLocal').hidden=cloud.role!=='editor';
-  $('enablePush').hidden=!cloud.ready||cloud.role!=='editor';
+  $('cloudUser').textContent=logged?(isViewOnly()?'САМО ПРЕГЛЕД':`${cloud.email||'Профил'} · ${cloud.role==='editor'?'Редактор':'Няма права'}`):'';
+  $('switchToEditor').hidden=!isViewOnly();
+  $('cloudUseLocal').hidden=!canEdit();
+  $('enablePush').hidden=!cloud.ready||!canEdit();
   $('cloudVapid').value=cloud.config?.vapidKey||$('cloudVapid').value;
 }
 function lockSchedule(){document.body.classList.remove('cloud-ready','cloud-editor','cloud-viewer');cloud.ready=false;$('teamRoleText').textContent='Не е свързан';$('teamSyncText').textContent='Влез или разгледай графика';}
 function unlockSchedule(){
+  // Do not skip the welcome screen when the browser restores a previous Firebase login.
+  // Only an explicit tap on Влез or Преглед reveals the shared schedule.
+  if(entryMode===null){lockSchedule();showCloudUI();return;}
   cloud.ready=true;document.body.classList.add('cloud-ready');
-  document.body.classList.toggle('cloud-editor',cloud.role==='editor');
-  document.body.classList.toggle('cloud-viewer',cloud.role==='viewer');
-  $('teamRoleText').textContent=cloud.role==='editor'?'РЕДАКТОР':'САМО ПРЕГЛЕД';
-  if(cloud.role==='viewer'){$('editNames').hidden=true;$('import').hidden=true;$('export').hidden=true;$('navPeople').hidden=true;}
-  else{$('editNames').hidden=false;$('import').hidden=false;$('export').hidden=false;$('navPeople').hidden=false;}
+  const editor=canEdit();
+  document.body.classList.toggle('cloud-editor',editor);
+  document.body.classList.toggle('cloud-viewer',!editor);
+  $('teamRoleText').textContent=editor?'РЕДАКТОР':'САМО ПРЕГЛЕД';
+  for(const id of ['editNames','import','export','navPeople'])$(id).hidden=!editor;
   showCloudUI();render();
 }
 async function loadFirebaseSDK(){
@@ -500,7 +507,7 @@ async function initializeTeam(){
   const differs=JSON.stringify(cloud.remotePeople)!==JSON.stringify(state.people)||JSON.stringify(cloud.remoteStatuses)!==JSON.stringify(state.statuses);
   if(role==='editor'&&!wasConnected()&&localHasData()&&differs){
     cloud.mode='choose';showCloudUI();cloudMessage('Открит е локален график · избери кое копие да се използва');
-    if(!$('cloudDialog').open)$('cloudDialog').showModal();return;
+    if(entryMode==='editor'&&!$('cloudDialog').open)$('cloudDialog').showModal();return;
   }
   activateTeam();
 }
@@ -563,7 +570,7 @@ async function flushPending(){
   finally{cloud.flushing=false;adoptRemote()}
 }
 async function uploadFullCloud(){
-  if(cloud.role!=='editor')throw Error('Само редактор може да качва график.');
+  if(!canEdit())throw Error('Само редактор може да качва график.');
   const sdk=cloud.sdk;
   const roster=structuredClone(state.people),entries=Object.entries(state.statuses||{}).filter(([k,v])=>v&&v!=='Р');
   // Writes are chunked to stay under Firestore's per-batch operation limits.
@@ -585,7 +592,7 @@ async function uploadFullCloud(){
 }
 async function onChooseRemote(){cloud.mode='active';putPending({people:null,cells:{}});activateTeam();notify('Зареден е общият график')}
 async function onChooseLocal(){
-  if(cloud.role!=='editor')return;
+  if(!canEdit())return;
   if(!confirm('Ще качиш локалния график в общата база за всички потребители. Ако там има данни, те ще бъдат заменени. Направи резервно копие. Продължаваш ли?'))return;
   try{cloudMessage('Качване на локалния график…');await uploadFullCloud();activateTeam();notify('Общият график е създаден')}
   catch(e){cloud.mode='choose';showCloudUI();cloudFail(e)}
@@ -645,23 +652,55 @@ $('notifications').onclick=()=>{
 };
 $('closeNotices').onclick=()=>$('noticeDialog').close();
 $('noticeDialog').addEventListener('click',e=>{if(e.target===$('noticeDialog'))$('noticeDialog').close()});
-$('gateSetup').onclick=()=>{editorLoginRequested=true;hideCloudError();showCloudUI();$('cloudDialog').showModal()};
+$('gateSetup').onclick=async()=>{
+  editorLoginRequested=true;hideCloudError();
+  try{
+    // Saved editor session: click Влез and enter immediately, without retyping credentials.
+    if(cloud.auth?.currentUser&&!cloud.auth.currentUser.isAnonymous&&cloud.role==='editor'&&cloud.mode==='active'){
+      entryMode='editor';adoptRemote();unlockSchedule();flushPending();return;
+    }
+    // First-time local/cloud choice is still honored for a remembered editor.
+    if(cloud.auth?.currentUser&&!cloud.auth.currentUser.isAnonymous&&cloud.role==='editor'&&cloud.mode==='choose'){
+      entryMode='editor';showCloudUI();if(!$('cloudDialog').open)$('cloudDialog').showModal();return;
+    }
+    // Anonymous read-only visitors must sign out before signing in as an editor.
+    if(cloud.auth?.currentUser&&(cloud.auth.currentUser.isAnonymous||cloud.role==='viewer')){
+      await cloud.sdk.signOut(cloud.auth);
+    }
+    entryMode='editor';showCloudUI();
+    if(!$('cloudDialog').open)$('cloudDialog').showModal();
+  }catch(e){cloudFail(e);if(!$('cloudDialog').open)$('cloudDialog').showModal();}
+};
 $('gateView').onclick=async()=>{
   editorLoginRequested=false;hideCloudError();
   try{
     if(!cloud.auth)throw Error('Няма връзка с Firebase. Провери интернет връзката.');
+    // Even a remembered editor may explicitly choose a read-only experience.
+    // The editor's Firebase session remains saved, but all editing actions are disabled.
+    if(cloud.mode==='active'&&(cloud.role==='viewer'||cloud.role==='editor')){
+      entryMode='viewer';adoptRemote();unlockSchedule();return;
+    }
+    if(cloud.mode==='choose'&&cloud.role==='editor'){
+      entryMode='viewer';activateTeam();return;
+    }
+    entryMode='viewer';
     if(cloud.auth.currentUser?.isAnonymous){await initializeTeam();return;}
-    // A signed-in email account without editor rights can still switch to free viewing.
+    // An unapproved email account can still browse anonymously.
     if(cloud.auth.currentUser)await cloud.sdk.signOut(cloud.auth);
     cloud.mode='connecting';showCloudUI();cloudMessage('Зареждане за преглед…');
-    // Anonymous Firebase is only a technical session; no code, email or password is required.
     await cloud.sdk.signInAnonymously(cloud.auth);
   }catch(e){cloud.mode='error';cloudFail(e);if(!$('cloudDialog').open)$('cloudDialog').showModal();}
 };
 $('switchToEditor').onclick=async()=>{
   hideCloudError();editorLoginRequested=true;
-  try{if(cloud.auth.currentUser?.isAnonymous)await cloud.sdk.signOut(cloud.auth);showCloudUI();if(!$('cloudDialog').open)$('cloudDialog').showModal();}
-  catch(e){cloudFail(e)}
+  try{
+    if(cloud.role==='editor'&&cloud.auth?.currentUser&&!cloud.auth.currentUser.isAnonymous&&cloud.mode==='active'){
+      entryMode='editor';adoptRemote();unlockSchedule();if($('cloudDialog').open)$('cloudDialog').close();flushPending();return;
+    }
+    entryMode='editor';
+    if(cloud.auth?.currentUser&&(cloud.auth.currentUser.isAnonymous||cloud.role!=='editor'))await cloud.sdk.signOut(cloud.auth);
+    showCloudUI();if(!$('cloudDialog').open)$('cloudDialog').showModal();
+  }catch(e){cloudFail(e)}
 };
 $('saveFirebaseConfig').onclick=async()=>{
   hideCloudError();try{
