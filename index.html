@@ -168,6 +168,16 @@ opacity:1;visibility:visible;transform:scale(1);transition:opacity .48s ease,tra
 .notice-list{max-height:62dvh;overflow:auto;display:grid;gap:10px;margin:18px 0}
 .notice-item{padding:13px;border:1px solid #d9e3d8;background:#f6f9f5;border-radius:13px;display:grid;gap:5px}
 .notice-item strong{color:#174834;font-size:14px}.notice-item span{color:#5c7664;font-size:12px}
+.notice-item .notice-actor{color:#245641;font-weight:750;font-size:12px;overflow-wrap:anywhere}
+.notice-item .notice-change{color:#153e2c;font-size:12px;font-weight:700;line-height:1.55;padding:8px 9px;background:#e7f0e8;border-radius:8px;overflow-wrap:anywhere}
+.notice-item .notice-metadata{color:#738278;font-size:11px}
+.notice-item .notice-context{font-size:12px;color:#3f6250;font-weight:650}
+.notice-item .notice-arrow{color:#b6792e;font-size:14px;font-weight:850;padding:0 4px}
+.commander-reminder .sheet-overlay{border-top:5px solid #bba35d}
+.commander-reminder h2{font-size:18px;line-height:1.35;letter-spacing:.025em;font-weight:850;color:#143f2c;margin:0 0 10px}
+.commander-reminder p{line-height:1.6;font-size:13px;color:#506b59;margin:5px 0}
+.commander-reminder .reminder-icon{width:47px;height:47px;background:#e6ebd3;border-radius:13px;display:grid;place-items:center;font-size:25px;margin-bottom:12px}
+
 body.cloud-viewer #navPeople,body.cloud-viewer #editNames,body.cloud-viewer #export,body.cloud-viewer #import{display:none!important}
 [hidden]{display:none!important}
 #enablePush{margin-top:9px}
@@ -325,7 +335,8 @@ body.cloud-viewer .viewer-banner{display:flex}
   <button class="widebtn secondary" type="button" id="changeFirebase">Смени Firebase проекта на това устройство</button>
   <button class="widebtn secondary" id="doneCloud" type="button">Затвори</button>
 </div></dialog>
-<dialog id="noticeDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">🔔 Промени в графика</h2><div class="modal-sub">Последни актуализации</div></div><button class="closemodal" id="closeNotices" type="button">×</button></div><div id="noticeItems" class="notice-list"><p>Няма известия.</p></div><p class="cloud-hint">За push известия при затворено приложение активирай опцията в ☰ → Облачна синхронизация. На iPhone отвори сайта от началния екран.</p></div></dialog>
+<dialog id="noticeDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title">🔔 Промени в графика</h2><div class="modal-sub">Кой, кога и какво е променил</div></div><button class="closemodal" id="closeNotices" type="button" aria-label="Затвори">×</button></div><div id="noticeItems" class="notice-list"><p>Няма известия.</p></div><p class="cloud-hint">Тук се виждат промените, записани в общия график. Push известията при затворено приложение се настройват отделно.</p></div></dialog>
+<dialog id="commanderReminderDialog" class="commander-reminder"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="reminder-icon" aria-hidden="true">📣</div><h2>ЗАПОЗНАЙ КВ ЗА ПРОМЕНИТЕ</h2><p>Промяната е записана в общия график. Уведоми командира на взвода какво е променено.</p><button class="widebtn" id="ackCommanderReminder" type="button">Разбрах</button></div></dialog>
 <dialog id="statsDialog"><div class="sheet-overlay"><div class="sheet-handle"></div><div class="modal-top"><div><h2 class="modal-title" id="statsTitle">Справка за деня</h2><div class="modal-sub" id="statsDate">Избрана дата</div></div><button type="button" class="closemodal" id="closeStats" aria-label="Затвори">×</button></div>
 <div id="statsOverview"><p class="stats-explainer">Празните клетки се броят като „На лице“. Всички обозначения на наряд се сумират в показателя „Наряд“. Натисни „Разход“, за да видиш кои военнослужещи отсъстват.</p><div class="stat-stack" id="statsDetails"></div></div>
 <div id="expenseListView" hidden><button type="button" class="expense-back" id="backToStats">‹ Към справката</button><div class="expense-head"><h3>Личен състав в разход</h3><span class="expense-total" id="expenseTotal"></span></div><div class="expense-rows" id="expenseRows"></div></div>
@@ -462,6 +473,14 @@ function rosterRef(){return cloud.sdk.doc(cloud.db,teamPath)}
 function cellsRef(){return cloud.sdk.collection(cloud.db,teamPath+'/cells')}
 function cellRef(key){return cloud.sdk.doc(cellsRef(),encodeURIComponent(key))}
 function eventsRef(){return cloud.sdk.collection(cloud.db,teamPath+'/events')}
+function currentEditorEmail(){return String(cloud.auth?.currentUser?.email||cloud.email||'').trim().toLowerCase()}
+const COMMANDER_EMAIL='presli100@abv.bg';
+function showCommanderReminder(){
+  if(!canEdit()||!currentEditorEmail()||currentEditorEmail()===COMMANDER_EMAIL)return;
+  const dialog=$('commanderReminderDialog');
+  if(dialog&&!dialog.open)dialog.showModal();
+}
+
 function accessRef(uid){return cloud.sdk.doc(cloud.db,'access',uid)}
 function queueKey(){return TEAM_PENDING_PREFIX+cloud.config.projectId+':'+cloud.uid}
 function getPending(){try{const p=JSON.parse(localStorage.getItem(queueKey()));if(p&&p.cells&&typeof p.cells==='object')return p}catch(e){}return {people:null,cells:{}}}
@@ -530,44 +549,88 @@ function watchTeam(){
     const events=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotices(events);
     if(cloud.notificationsReady){
       const added=snap.docChanges().filter(c=>c.type==='added').map(c=>c.doc.data()).filter(e=>e.uid!==cloud.uid);
-      if(added.length)notify('Има нова промяна в графика');
+      if(added.length){
+        const newest=added[0];
+        const who=newest.actorEmail||'друг редактор';
+        notify(newest.person?`Промяна от ${who}: ${newest.person}`:`Нова промяна от ${who}`);
+      }
     }
     cloud.notificationsReady=true;
   },cloudFail));
 }
 function enqueueCell(key,code){
   if(!canEdit())return;
-  const p=getPending();p.cells[key]={code,stamp:Date.now()};putPending(p);cloudMessage('Промяната чака синхронизация');flushPending();
+  const p=getPending();p.cells[key]={code,stamp:Date.now()};putPending(p);
+  cloudMessage('Промяната чака синхронизация');flushPending();
 }
 function enqueueRoster(){
   if(!canEdit())return;
-  const p=getPending();p.people={people:structuredClone(state.people),stamp:Date.now()};putPending(p);cloudMessage('Синхронизиране на списъка');flushPending();
+  const p=getPending();p.people={people:structuredClone(state.people),stamp:Date.now()};putPending(p);
+  cloudMessage('Синхронизиране на списъка');flushPending();
 }
-function findPersonByCell(key){const personId=key.split('|')[0];return state.people.find(p=>p.id===personId)?.name||'Личен състав'}
+function findPersonByCell(key){
+  const personId=key.split('|')[0];
+  return state.people.find(p=>p.id===personId)||cloud.remotePeople.find(p=>p.id===personId)||null;
+}
+function rosterDifference(before,after){
+  const oldMap=new Map(before.map(p=>[p.id,p]));
+  const newMap=new Map(after.map(p=>[p.id,p]));
+  const added=after.filter(p=>!oldMap.has(p.id)).map(p=>p.name);
+  const removed=before.filter(p=>!newMap.has(p.id)).map(p=>p.name);
+  const renamed=after.filter(p=>oldMap.has(p.id)&&(oldMap.get(p.id).name!==p.name||oldMap.get(p.id).group!==p.group)).map(p=>p.name);
+  return {added,removed,renamed};
+}
 async function flushPending(){
   if(cloud.flushing||!canEdit()||!navigator.onLine)return;
-  cloud.flushing=true;
+  cloud.flushing=true;let allSucceeded=false;
   try{
     const sdk=cloud.sdk;
     let pending=getPending();
     if(pending.people){
-      const item=pending.people;const batch=sdk.writeBatch(cloud.db);
-      batch.set(rosterRef(),{people:item.people,updatedAt:sdk.serverTimestamp(),updatedBy:cloud.uid});
-      batch.set(sdk.doc(eventsRef()),{at:sdk.serverTimestamp(),uid:cloud.uid,kind:'roster',note:'Променен личен състав'});
-      await batch.commit();cloud.remotePeople=structuredClone(item.people);
+      const item=pending.people;
+      const wasChanged=await sdk.runTransaction(cloud.db,async tx=>{
+        const oldSnap=await tx.get(rosterRef());
+        const oldPeople=oldSnap.exists()&&Array.isArray(oldSnap.data().people)?oldSnap.data().people:[];
+        if(JSON.stringify(oldPeople)===JSON.stringify(item.people))return false;
+        const diff=rosterDifference(oldPeople,item.people);
+        tx.set(rosterRef(),{people:item.people,updatedAt:sdk.serverTimestamp(),updatedBy:cloud.uid});
+        tx.set(sdk.doc(eventsRef()),{at:sdk.serverTimestamp(),uid:cloud.uid,actorEmail:currentEditorEmail(),kind:'roster',note:'Променен личен състав',previousCount:oldPeople.length,newCount:item.people.length,added:diff.added,removed:diff.removed,renamed:diff.renamed});
+        return true;
+      });
+      cloud.remotePeople=structuredClone(item.people);
       pending=getPending();if(pending.people?.stamp===item.stamp){pending.people=null;putPending(pending)}
+      if(wasChanged)showCommanderReminder();
     }
     for(const [key,item] of Object.entries(getPending().cells)){
-      const batch=sdk.writeBatch(cloud.db);
-      batch.set(cellRef(key),{key,code:item.code||'Р',at:sdk.serverTimestamp(),updatedBy:cloud.uid});
-      batch.set(sdk.doc(eventsRef()),{at:sdk.serverTimestamp(),uid:cloud.uid,kind:'cell',note:'Обновен график',day:key.split('|').slice(1).join('|')});
-      await batch.commit();
-      if(!item.code||item.code==='Р')delete cloud.remoteStatuses[key];else cloud.remoteStatuses[key]=item.code;
-      pending=getPending();if(pending.cells[key]?.stamp===item.stamp){delete pending.cells[key];putPending(pending)}
+      const person=findPersonByCell(key);
+      const code=item.code||'Р';
+      const stamp=item.stamp;
+      // The server's prior value is read inside the transaction, so concurrent
+      // changes from another editor appear correctly in the history.
+      const wasChanged=await sdk.runTransaction(cloud.db,async tx=>{
+        const previousSnap=await tx.get(cellRef(key));
+        const oldCode=previousSnap.exists()?previousSnap.data().code||'Р':'Р';
+        if(oldCode===code)return false;
+        tx.set(cellRef(key),{key,code,at:sdk.serverTimestamp(),updatedBy:cloud.uid});
+        tx.set(sdk.doc(eventsRef()),{
+          at:sdk.serverTimestamp(),uid:cloud.uid,actorEmail:currentEditorEmail(),
+          kind:'cell',note:'Промяна в графика',day:key.split('|').slice(1).join('|'),
+          personId:key.split('|')[0],person:person?.name||'Непознат военнослужещ',
+          group:person?.group||'',oldCode,newCode:code
+        });
+        return true;
+      });
+      if(!code||code==='Р')delete cloud.remoteStatuses[key];else cloud.remoteStatuses[key]=code;
+      pending=getPending();if(pending.cells[key]?.stamp===stamp){delete pending.cells[key];putPending(pending)}
+      if(wasChanged)showCommanderReminder();
     }
+    allSucceeded=true;
     cloudMessage('Всички промени са синхронизирани','success');
   }catch(e){cloudFail(e);cloudMessage('Промяната остава запазена на устройството','error')}
-  finally{cloud.flushing=false;adoptRemote()}
+  finally{
+    cloud.flushing=false;adoptRemote();
+    if(allSucceeded&&canEdit()&&(getPending().people||Object.keys(getPending().cells).length))queueMicrotask(flushPending);
+  }
 }
 async function uploadFullCloud(){
   if(!canEdit())throw Error('Само редактор може да качва график.');
@@ -575,7 +638,7 @@ async function uploadFullCloud(){
   const roster=structuredClone(state.people),entries=Object.entries(state.statuses||{}).filter(([k,v])=>v&&v!=='Р');
   // Writes are chunked to stay under Firestore's per-batch operation limits.
   let batch=sdk.writeBatch(cloud.db);batch.set(rosterRef(),{people:roster,updatedAt:sdk.serverTimestamp(),updatedBy:cloud.uid});
-  batch.set(sdk.doc(eventsRef()),{at:sdk.serverTimestamp(),uid:cloud.uid,kind:'roster',note:'Зареден общ график'});
+  batch.set(sdk.doc(eventsRef()),{at:sdk.serverTimestamp(),uid:cloud.uid,actorEmail:currentEditorEmail(),kind:'roster',note:'Зареден общ график от резервно копие',newCount:roster.length});
   await batch.commit();
   const outgoing={};
   // On explicit replacement, remove old per-cell documents not present in backup.
@@ -589,6 +652,7 @@ async function uploadFullCloud(){
     await b.commit();
   }
   cloud.remotePeople=roster;cloud.remoteStatuses=outgoing;putPending({people:null,cells:{}});
+  showCommanderReminder();
 }
 async function onChooseRemote(){cloud.mode='active';putPending({people:null,cells:{}});activateTeam();notify('Зареден е общият график')}
 async function onChooseLocal(){
@@ -628,18 +692,42 @@ async function cloudInitFromSaved(){
     else{showCloudUI();cloudMessage('Първо свържи общия Firebase проект');}
   }catch(e){cloudFail(e)}
 }
+function readableEventDate(day){
+  if(typeof day!=='string')return '';
+  const parts=day.split('-');return parts.length===3?`${parts[2]}.${parts[1]}.${parts[0]}`:day;
+}
+function readableChange(code){
+  return statusLabel(typeof code==='string'&&code?code:'Р').replace(' (празна клетка)','');
+}
 function renderNotices(events){
   const host=$('noticeItems');if(!host)return;host.replaceChildren();
-  if(!events.length){host.append(mk('p','muted','Още няма промени.'));return}
+  if(!events.length){host.append(mk('p','muted','Още няма промени.'));$('noticeBadge').hidden=true;return;}
   const seen=Number(localStorage.getItem('grafik-team-events-seen')||0);
   let unread=0;
   for(const event of events){
-    const timestamp=event.at?.toMillis?.()||0;if(timestamp>seen&&event.uid!==cloud.uid)unread++;
+    const timestamp=event.at?.toMillis?.()||0;
+    if(timestamp>seen&&event.uid!==cloud.uid)unread++;
     const item=mk('div','notice-item');
-    item.append(mk('strong','',event.kind==='roster'?'Променен личен състав':'Промяна в графика'));
-    const extra=event.day?' · '+event.day:'';
-    const date=timestamp?new Date(timestamp).toLocaleString('bg-BG'):'';
-    item.append(mk('span','',date+extra));host.append(item);
+    item.append(mk('strong','',event.kind==='roster'?'Промяна в личния състав':'Промяна в графика'));
+    const actor=event.actorEmail|| (event.uid?'Профил '+event.uid.slice(0,9)+'…':'Неизвестен редактор');
+    item.append(mk('span','notice-actor','Извършил: '+actor));
+    if(event.kind==='cell'){
+      if(event.person)item.append(mk('span','notice-context',event.person+(event.group?' · '+event.group:'')));
+      if(event.oldCode!==undefined&&event.newCode!==undefined){
+        item.append(mk('div','notice-change',readableChange(event.oldCode)+' → '+readableChange(event.newCode)));
+      }else item.append(mk('span','notice-context',event.note||'Променен статус (стар запис)'));
+      if(event.day)item.append(mk('span','notice-metadata','Дата на графика: '+readableEventDate(event.day)));
+    } else if(event.kind==='roster'){
+      if(event.note)item.append(mk('span','notice-context',event.note));
+      const changes=[];
+      if(event.added?.length)changes.push('Добавени: '+event.added.join(', '));
+      if(event.removed?.length)changes.push('Премахнати: '+event.removed.join(', '));
+      if(event.renamed?.length)changes.push('Променени: '+event.renamed.join(', '));
+      if(!changes.length&&event.newCount!==undefined)changes.push('По списък: '+event.newCount);
+      if(changes.length)item.append(mk('div','notice-change',changes.join(' · ')));
+    }
+    if(timestamp)item.append(mk('span','notice-metadata','Извършена: '+new Date(timestamp).toLocaleString('bg-BG')));
+    host.append(item);
   }
   cloud.noticeCount=unread;
   $('noticeBadge').hidden=!unread;$('noticeBadge').textContent=String(Math.min(99,unread));
@@ -651,6 +739,8 @@ $('notifications').onclick=()=>{
   cloud.noticeCount=0;$('noticeBadge').hidden=true;
 };
 $('closeNotices').onclick=()=>$('noticeDialog').close();
+$('ackCommanderReminder').onclick=()=>$('commanderReminderDialog').close();
+$('commanderReminderDialog').addEventListener('click',e=>{if(e.target===$('commanderReminderDialog'))$('commanderReminderDialog').close()});
 $('noticeDialog').addEventListener('click',e=>{if(e.target===$('noticeDialog'))$('noticeDialog').close()});
 $('gateSetup').onclick=async()=>{
   editorLoginRequested=true;hideCloudError();
@@ -817,8 +907,8 @@ function render(){
 }
 function openStatus(person,date){if(!canEdit()){notify('Само редакторите могат да променят графика');return}pickedPerson=person;pickedDate=date;choiceTab='base';$('personTitle').textContent=person.name;$('statusDate').textContent=`${pad(date.getDate())}.${pad(date.getMonth()+1)}.${date.getFullYear()} · ${statusLabel(statusOf(person,date))}`;renderChoices();$('statusDialog').showModal()}
 function renderChoices(){for(const t of ['base','duty'])$(t+'Tab').classList.toggle('active',t===choiceTab);const options=choiceTab==='duty'?DUTIES.map(code=>['Н:'+code,code]):BASIC;const current=statusOf(pickedPerson,pickedDate);const container=$('choiceGrid');container.replaceChildren(...options.map(([code,label])=>{const button=mk('button',choiceTab==='duty'?'duty':statusClass(code),choiceTab==='duty'?label:(code==='П'?'По':code==='КМ'?'К':code));button.type='button';if(code===current)button.classList.add('chosen');if(choiceTab==='base')button.append(mk('small','',label));button.onclick=()=>setStatus(code);return button}))}
-function setStatus(code){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];state.statuses[k]=code;if(!save()){if(previous===undefined)delete state.statuses[k];else state.statuses[k]=previous;return}enqueueCell(k,code);selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);$('statusDialog').close();render();notify('Промяната е запазена')}
-function resetStatus(){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];delete state.statuses[k];if(!save()){state.statuses[k]=previous;return}enqueueCell(k,'Р');$('statusDialog').close();selectDate(pickedDate);notify('Изчистено · На лице')}
+function setStatus(code){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];if((previous||'Р')===code){$('statusDialog').close();return}state.statuses[k]=code;if(!save()){if(previous===undefined)delete state.statuses[k];else state.statuses[k]=previous;return}enqueueCell(k,code);selected=makeDate(pickedDate.getFullYear(),pickedDate.getMonth(),pickedDate.getDate());start=monday(selected);$('statusDialog').close();render();notify('Промяната е запазена')}
+function resetStatus(){if(!canEdit())return;const k=`${pickedPerson.id}|${dateStr(pickedDate)}`,previous=state.statuses[k];if(!previous||previous==='Р'){$('statusDialog').close();return}delete state.statuses[k];if(!save()){state.statuses[k]=previous;return}enqueueCell(k,'Р');$('statusDialog').close();selectDate(pickedDate);notify('Изчистено · На лице')}
 function parsePeople(raw){const lines=raw.replace(/\u00a0/g,' ').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);const known=['Командване','КИО','Транспортно','Ремонт и евакуация'];let group='Командване';const out=[];for(const line of lines){if(line.includes('|')){const i=line.indexOf('|'),nextGroup=line.slice(0,i).trim(),name=line.slice(i+1).trim();if(nextGroup)group=nextGroup;if(name)out.push({group,name});continue}const heading=known.find(x=>x.toLocaleLowerCase('bg')===line.toLocaleLowerCase('bg'));if(heading){group=heading;continue}if(line===line.toLocaleUpperCase('bg')&&line.length<40&&!/\d/.test(line)){group=line;continue}out.push({group,name:line})}return out}
 function openNames(){if(!canEdit()){notify('Само редакторите могат да променят личния състав');return}if($('menuDialog').open)$('menuDialog').close();$('namesText').value=state.people.map(p=>p.group+' | '+p.name).join('\n');$('namesError').style.display='none';$('namesDialog').showModal()}
 function saveNames(){if(!canEdit())return;const parsed=parsePeople($('namesText').value);if(!parsed.length){$('namesError').textContent='Въведи поне един човек.';$('namesError').style.display='block';return}const old=state.people,matched=new Set();const people=parsed.map((entry,i)=>{const same=old.find(p=>p.name===entry.name&&p.group===entry.group&&!matched.has(p.id));if(same){matched.add(same.id);return same}return {id:'custom'+Date.now()+'_'+i,name:entry.name,group:entry.group}});state.people=people;if(!save()){state.people=old;return}enqueueRoster();$('namesDialog').close();render();notify('Списъкът е запазен')}
